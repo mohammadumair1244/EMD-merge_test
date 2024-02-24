@@ -1,0 +1,245 @@
+.date-ranges .visibility-hidden {
+    visibility: hidden;
+}
+
+.date-ranges .d-flex {
+    display: flex;
+}
+
+.date-ranges h1 {
+    font-size: 14px;
+}
+
+.date-ranges .justify-space-between {
+    justify-content: space-between;
+}
+
+.date-filter-button {
+    background-color: #001ad3ad;
+    padding: 5px 35px;
+    cursor: pointer;
+    margin-block: 5px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    float: right;
+}
+
+.date-ranges {
+    padding: 10px 10px 90px 10px;
+    margin: auto;
+    width: 50%;
+    background-color: white;
+    border: 1px solid gray;
+    border-radius: 10px;
+    box-shadow: 2px 3px 4px gray;
+    z-index: 1;
+}
+
+.date-ranges input[type="radio"] {
+    display: none;
+}
+
+.date-ranges input[type="radio"]:checked+label {
+    background: #3146d9;
+}
+
+.date-ranges label {
+    display: inline-block;
+    font-size: 14px;
+    height: 35px;
+    line-height: 35px;
+    width: 15%;
+    text-align: center;
+    background: #001ad3ad;
+    color: white;
+    position: relative;
+    transition: 0.25s background ease;
+    cursor: pointer;
+}
+
+.date-ranges input[type="radio"]#tab1:checked~.content-container #c1 {
+    display: block;
+}
+
+.date-ranges input[type="radio"]#tab2:checked~.content-container #c2 {
+    display: block;
+}
+
+.date-ranges input[type="radio"]#tab3:checked~.content-container #c3 {
+    display: block;
+}
+
+.date-ranges input[type="radio"]#tab4:checked~.content-container #c4 {
+    display: block;
+}
+
+.date-ranges input[type="radio"]#tab5:checked~.content-container #c5 {
+    display: block;
+}
+
+.date-ranges .content-container {
+    position: relative;
+    height: 260px;
+    font-size: 16px;
+}
+
+.date-ranges .content-container .content {
+    position: absolute;
+    padding: 25px;
+    width: 100%;
+    top: 0;
+    display: none;
+    transition: 0.25s ease;
+    color: black;
+}
+
+.date-ranges .presets {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.date-ranges .presets:hover {
+    background-color: aliceblue;
+}
+
+/* CALENDER CSS ----- Start */
+
+.date-ranges .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.date-ranges .angle {
+    font-size: 30px;
+    font-weight: bolder;
+}
+
+.date-ranges .pre_navigator {
+    cursor: pointer;
+}
+
+.date-ranges .post_navigator {
+    cursor: pointer;
+}
+
+.date-ranges .year_pre_navigator {
+    cursor: pointer;
+}
+
+.date-ranges .year_post_navigator {
+    cursor: pointer;
+}
+
+.date-ranges .months-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 0.3em;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.date-ranges ul,
+.date-ranges ol {
+    display: grid;
+    /* grid-template-columns: repeat(7, 1fr); */
+    grid-gap: 1em;
+    margin: 0 auto;
+    max-width: 64em;
+    padding: 0;
+}
+
+.date-ranges li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    list-style: none;
+    margin-left: 0;
+    cursor: pointer;
+}
+
+.date-ranges ul.weekdays {
+    margin-bottom: 1em;
+}
+
+.date-ranges ol.day-grid li {
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+}
+
+.date-ranges ul.weekdays abbr[title] {
+    border: none;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.date-ranges #c2>.calendar>.day-grid .rowWrapper>li:hover {
+    background-color: orange;
+}
+
+.date-ranges #c3>.calendar>.day-grid .rowWrapper:hover>li {
+    background-color: orange;
+}
+
+
+/* .day-grid:hover ol.day-grid li {
+  background-color: red;
+} */
+.date-ranges span.rowWrapper {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.date-ranges ul.weekdays {
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.date-ranges .range-inputs {
+    display: flex;
+    justify-content: space-around;
+}
+
+.date-ranges .range-inputs input {
+    border: 1px solid;
+    border-radius: unset;
+    padding: 5px 15px;
+    outline: unset;
+}
+
+.date-ranges .month-span:hover {
+    cursor: pointer;
+}
+
+@media all and (max-width: 800px) {
+
+    .date-ranges ul,
+    .date-ranges ol {
+        grid-gap: 0.25em;
+    }
+
+    .date-ranges ul.weekdays li {
+        font-size: 0;
+    }
+
+    .date-ranges ul.weekdays>li abbr:after {
+        content: attr(title);
+        font-size: calc(16px + (26 - 16) * ((100vw - 300px) / (1600 - 300)));
+        text-align: center;
+    }
+}
+
+/* CALENDER CSS ----- End */
+
+.date-ranges .month-span {
+    display: flex;
+    flex-direction: column;
+    column-gap: 0.3rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.date-ranges .calender-icon {
+    max-width: 40px;
+}
