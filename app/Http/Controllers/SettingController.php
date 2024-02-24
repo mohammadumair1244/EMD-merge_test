@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 
 class SettingController extends Controller
@@ -102,25 +101,22 @@ class SettingController extends Controller
     {
         $this->authorize('on_off_chat');
         Setting::where('key', 'emd_chat_status')->update(['value' => $request->chat_status]);
-        AdminController::create_setting_key_file();
         return back();
     }
 
     public function emd_laravel_log_page()
     {
-        $log_files = [];
-        $logsFolder = storage_path('logs');
-        if (file_exists($logsFolder) && is_dir($logsFolder)) {
-            $files = scandir($logsFolder);
-            $files = array_diff($files, array('.', '..', '.gitignore'));
-            $log_files = $files;
+        $logFilePath = storage_path('logs/laravel.log');
+        $available = 0;
+        if (File::exists($logFilePath)) {
+            $available = 1;
         }
-        return view('admin.emd-laravel-log')->with(["log_files" => $log_files]);
+        return view('admin.emd-laravel-log')->with("available", $available);
     }
 
     public function emd_laravel_log_delete(Request $request)
     {
-        $logFilePath = storage_path('logs/' . $request->file_name);
+        $logFilePath = storage_path('logs/laravel.log');
         if (File::exists($logFilePath)) {
             File::delete($logFilePath);
         }
@@ -128,32 +124,20 @@ class SettingController extends Controller
     }
     public function emd_laravel_log_download(Request $request)
     {
-        $logFilePath = storage_path('logs/' . $request->file_name);
+        $logFilePath = storage_path('logs/laravel.log');
         if (File::exists($logFilePath)) {
-            return response()->download($logFilePath, $request->file_name);
+            return response()->download($logFilePath, 'laravel.log');
         }
         return back();
     }
-    public function emd_laravel_log_read($file_name)
-    {
-        $logFilePath = storage_path('logs/' . $file_name);
+    public function emd_laravel_log_read(){
+        $logFilePath = storage_path('logs/laravel.log');
         if (File::exists($logFilePath)) {
             $logFilePath = File::get($logFilePath);
-            return view('admin.read-log-file')->with([
-                'log_content' => $logFilePath,
-            ]);
+                return view('admin.read-log-file')->with([
+                    'log_content' => $logFilePath,
+                ]);
         }
         return back();
-    }
-    public function emd_view_migrate_status_page()
-    {
-        Artisan::call('migrate:status');
-        $lines = str_replace("\r\n", ",", Artisan::output());
-        $lines = explode(",", $lines);
-        $maxLineLength = max(array_map('strlen', $lines));
-        $paddedLines = array_map(function ($line) use ($maxLineLength) {
-            return str_pad($line, $maxLineLength, ' ', STR_PAD_RIGHT);
-        }, $lines);
-        return view('admin.emd-migrate-status')->with(["migrate_status" => $paddedLines]);
     }
 }

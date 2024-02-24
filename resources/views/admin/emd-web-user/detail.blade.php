@@ -148,7 +148,7 @@
                                             <td>{{ @$emd_web_user->country }}</td>
                                         </tr>
                                         <tr>
-                                            <td>Register IP</td>
+                                            <td>Register Ip</td>
                                             <td>{{ @$emd_web_user->ip }}</td>
                                         </tr>
                                         <tr>
@@ -173,18 +173,6 @@
                                                 {{ $for_web_api_transactions->sum('emd_user_transaction_allows_sum_queries_used') }}
                                                 /
                                                 {{ $for_web_api_transactions->sum('emd_user_transaction_allows_sum_queries_limit') }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Last Login</td>
-                                            <td>
-                                                {{ Carbon\Carbon::parse(@$emd_web_user->last_login)->format('d M Y H:i A') }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Login IP</td>
-                                            <td>
-                                                {{ @$emd_web_user->login_ip ?? '127.0.0.1' }}
                                             </td>
                                         </tr>
                                     </table>
@@ -287,7 +275,7 @@
                                 <thead>
                                     <tr>
                                         <th>Sr.</th>
-                                        <th>Order# / Payment From</th>
+                                        <th>Order#</th>
                                         <th>Plan / Type</th>
                                         <th>Price</th>
                                         <th>Duration</th>
@@ -315,8 +303,6 @@
                                                 @else
                                                     {{ $item->order_no }}
                                                 @endcan
-                                                <br>
-                                                {{ @$item?->payment_from }}
                                             </td>
                                             <td>{{ @$item->emd_pricing_plan->name }} /
                                                 ({{ App\Models\EmdPricingPlan::IS_API[(int) @$item->emd_pricing_plan->is_api] }})
@@ -337,7 +323,7 @@
                                                 @can('view_user_query_detail')
                                                     <a class="btn btn-primary"
                                                         href="{{ route('emd_query_availability', ['transaction_id' => $item->id]) }}">
-                                                        Available
+                                                        Avail
                                                     </a>
                                                 @endcan
                                             </td>

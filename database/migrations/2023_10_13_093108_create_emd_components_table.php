@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string("key",100)->nullable();
             $table->string("lang",100)->nullable();
             $table->longText("json_body")->nullable()->default(json_encode([]));
-            $table->integer("parent_id")->default(0);
+            $table->integer("parent_id")->nullable()->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

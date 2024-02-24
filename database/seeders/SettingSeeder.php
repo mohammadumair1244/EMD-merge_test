@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Http\Controllers\AdminController;
 use App\Models\Setting;
 use Illuminate\Database\Seeder;
 
@@ -142,27 +141,8 @@ class SettingSeeder extends Seeder
                 'type' => "inputField",
                 'autoload' => 0,
             ],
-            [
-                'key' => 'emd_throttle_tool_limit',
-                'value' => 20,
-                'section' => 'content',
-                'type' => "inputField",
-                'autoload' => 0,
-            ],
-            [
-                'key' => 'emd_mobile_api_key_access',
-                'value' => md5(time()),
-                'section' => 'content',
-                'type' => "inputField",
-                'autoload' => 0,
-            ],
-            [
-                'key' => 'emd_dashboard_stats',
-                'value' => 0,
-                'section' => 'content',
-                'type' => "inputField",
-                'autoload' => 0,
-            ],
+            
+
         ];
         foreach ($setting as $key => $value) {
             Setting::firstOrCreate(
@@ -175,6 +155,5 @@ class SettingSeeder extends Seeder
                 ]
             );
         }
-        AdminController::create_setting_key_file();
     }
 }

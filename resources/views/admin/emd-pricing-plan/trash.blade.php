@@ -19,7 +19,7 @@
                                 <th>Discount</th>
                                 <th>Duration</th>
                                 <th>Web / API</th>
-                                <th>Mobile</th>
+                                <th>Recurring</th>
                                 <th>Queries</th>
                                 <th class="actioncell"></th>
                             </tr>
@@ -31,10 +31,10 @@
                                     <td>{{ $item->name }} <br> <b><i>{{ @$item::PLAN_TYPE[$item->plan_type] }}</i></b>
                                     </td>
                                     <td>{{ $item->sale_price }}</td>
-                                    <td>{{ $item->discount_percentage ?? 0 }}%</td>
+                                    <td>{{ $item->discount_percentage }}%</td>
                                     <td>{{ $item->duration }} Days</td>
                                     <td>{{ App\Models\EmdPricingPlan::IS_API[$item->is_api] }}</td>
-                                    <td>{{ App\Models\EmdPricingPlan::MOBILE_OR_WEB[$item->is_mobile] }} Plan</td>
+                                    <td>{{ $item->recurring_detail }}</td>
                                     <td>{{ $item->emd_pricing_plan_allows_sum_queries_limit }}</td>
                                     <td class="actioncell">
                                         @can('restore_pricing_plan')

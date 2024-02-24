@@ -15,10 +15,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('checkuser:premium')->dailyAt('23:55');
+        $schedule->command('checkuser:premium')->dailyAt('00:05');
         $schedule->command('sendcampaign:email')->hourly();
         $schedule->command('delete:null-audit')->hourly();
-        $schedule->command('delete:un-use-plan')->daily();
         // $schedule->command('inspire')->hourly();
     }
 

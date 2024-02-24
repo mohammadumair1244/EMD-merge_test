@@ -10,7 +10,7 @@
             background: transparent;
             row-gap: 0.5em;
 
-        }
+        } 
 
         .images_row div.image-box {
 
@@ -58,8 +58,8 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="" class="form-label">Page Name</label>
-                            <input type="text" name="name" class="form-control" placeholder="Page Name" value=""
-                                required>
+                            <input type="text" name="name" class="form-control" placeholder="Page Name"
+                                value="" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="" class="form-label">Blade File</label>
@@ -67,15 +67,14 @@
                                 value="">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="" class="form-label">Page Slug
-                                (<del>https://www.domainname.com/</del>testing/pricing-plan)</label>
-                            <input type="text" name="slug" class="form-control js-custom-page-slug"
-                                placeholder="Page Slug" value="">
+                            <label for="" class="form-label">Page Slug (<del>https://www.domainname.com/</del>testing/pricing-plan)</label>
+                            <input type="text" name="slug" class="form-control js-custom-page-slug" placeholder="Page Slug"
+                                value="">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="" class="form-label">Page Key</label>
-                            <input type="text" name="page_key" readonly="" class="form-control js-page-key"
-                                placeholder="Page Key" value="">
+                            <input type="text" name="page_key" readonly="" class="form-control js-page-key" placeholder="Page Key"
+                                value="">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="" class="form-label">Meta Title</label>
@@ -85,13 +84,6 @@
                         <div class="col-md-6 mb-3">
                             <label for="" class="form-label">Meta Description</label>
                             <textarea rows="3" name="meta_description" class="form-control" placeholder="Meta Title" value=""></textarea>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="" class="form-label">Show in (Sitemap)</label>
-                            <select name="sitemap" id="" class="form-control">
-                                <option value="1">Yes</option>
-                                <option value="0">No</option>
-                            </select>
                         </div>
                     </div>
                     <span class="js-span-toggle-content">
@@ -141,13 +133,11 @@
 @endsection
 @section('script')
     {{-- TINYMCE SCRIPT --}}
-    {{-- <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js" referrerpolicy="origin"></script> --}}
+    <script defer src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <script defer src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js" referrerpolicy="origin">
+    </script>
     {{-- TINYMCE SCRIPT END --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"
-        integrity="sha512-6JR4bbn8rCKvrkdoTJd/VFyXAN4CE9XMtgykPWgKiHjou56YDJxWsi90hAeMTYxNwUnKSQu9JPc3SQUg+aGCHw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="{{ asset('web_assets/admin/js/tinymce-script-2.js?v1.0.3') }}"></script>
+    <script src="{{ asset('web_assets/admin/js/tinymce-script.js?v1.0.2') }}"></script>
     <script>
         $(document).ready(function() {
             $.ajaxSetup({
@@ -160,7 +150,7 @@
             });
             $(".js-custom-page-slug").bind('keyup change input', function() {
                 let val = $(this).val().toLowerCase().trim();
-                val = val.replaceAll(" ", "-");
+                val=val.replaceAll(" ","-");
                 $('.js-page-key').val(val.replaceAll("/", "-"));
             });
         });

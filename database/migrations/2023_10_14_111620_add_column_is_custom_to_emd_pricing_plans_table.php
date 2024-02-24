@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::table('emd_pricing_plans', function (Blueprint $table) {
             if (!Schema::hasColumn('emd_pricing_plans', 'is_custom')) {
-                $table->tinyInteger('is_custom')->default(0)->comment("0 for no custom plan, 1 for custom plan, 2 for dynamic plan, 3 for dynamic sale plan");
+                $table->tinyInteger('is_custom')->nullable()->default(0)->comment("0 for no custom plan, 1 for custom plan, 2 for dynamic plan, 3 for dynamic sale plan");
             }
         });
     }

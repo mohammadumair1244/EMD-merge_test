@@ -54,94 +54,45 @@ class EmdMicrosoftClarityRepository implements EmdMicrosoftClarityInterface
         $request['clarity_json'] = json_encode($allow_json);
 
         $this->emd_microsoft_clarity_model->create($request->except(['_token', 'field_type', 'tool_or_custom_page', 'keys', 'default_values']));
-        $this->create_microsoft_clarity_file();
         return true;
     }
 
     public static function clarity_get(int | null $emd_tool_id = null, int | null $emd_custom_page_id = null)
     {
+        if ($emd_tool_id !== null) {
+            $clarity_row = EmdMicrosoftClarity::where('tool_id', $emd_tool_id);
+            if ($emd_tool_id == 0) {
+                $clarity_row = $clarity_row->where('is_tool_pages', 1);
+            }
+        }
+
+        if ($emd_custom_page_id !== null) {
+            $clarity_row = EmdMicrosoftClarity::where('emd_custom_page_id', $emd_custom_page_id);
+            if ($emd_custom_page_id == 0) {
+                $clarity_row = $clarity_row->where('is_custom_pages', 1);
+            }
+        }
+
         $device = EmdWebUserRepository::UserDevice();
-        $device_start = match ($device) {
-            "Desktop" => "D",
-            "Tablet" => "T",
-            "Mobile" => "M",
-            default => "N",
-        };
-
-        $check_user_premium = EmdWebUserRepository::EmdIsUserPremium() == 1 ? 1 : 0;
-        if ($emd_tool_id != null) {
-            $specific_tool = config('emd_microsoft_clarity.T' . $emd_tool_id . $device_start . $check_user_premium) ?? 0;
-            $all_tools = config('emd_microsoft_clarity.TA' . $device_start . $check_user_premium) ?? 0;
-            return $all_tools > $specific_tool ? $all_tools : $specific_tool;
+        if ($device == "Desktop") {
+            $clarity_row = $clarity_row->whereJsonContains('clarity_json->Desktop', 1);
+        } else if ($device == "Tablet") {
+            $clarity_row = $clarity_row->whereJsonContains('clarity_json->Tablet', 1);
+        } else if ($device == "Mobile") {
+            $clarity_row = $clarity_row->whereJsonContains('clarity_json->Mobile', 1);
         }
-
-        if ($emd_custom_page_id != null) {
-            $specific_tool = config('emd_microsoft_clarity.T' . $emd_custom_page_id . $device_start . $check_user_premium) ?? 0;
-            $all_tools = config('emd_microsoft_clarity.TA' . $device_start . $check_user_premium) ?? 0;
-            return $all_tools > $specific_tool ? $all_tools : $specific_tool;
+        $clarity_row = $clarity_row->whereJsonContains('clarity_json->PremiumUser', EmdWebUserRepository::EmdIsUserPremium())->latest()->first();
+        if ($clarity_row == null && $emd_tool_id !== null && $emd_tool_id != 0) {
+            return EmdMicrosoftClarityRepository::clarity_get(emd_tool_id: 0);
+        } else if ($clarity_row == null && $emd_custom_page_id !== null && $emd_custom_page_id != 0) {
+            return EmdMicrosoftClarityRepository::clarity_get(emd_custom_page_id: 0);
+        } else {
+            return $clarity_row;
         }
-
-        return 0;
     }
     public function delete_link($id): bool
     {
         $this->emd_microsoft_clarity_model->destroy($id);
-        $this->create_microsoft_clarity_file();
-        return true;
-    }
-    public function create_microsoft_clarity_file()
-    {
-        $microsoft_clarities = $this->emd_microsoft_clarity_model->get();
-        $configData = [];
-        foreach ($microsoft_clarities as $item) {
-            $clarity_allow = json_decode($item->clarity_json);
-            if ($item->tool_id != 0) {
-                if ($clarity_allow->Mobile) {
-                    $configData["T" . $item->tool_id . "M" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Desktop) {
-                    $configData["T" . $item->tool_id . "D" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Tablet) {
-                    $configData["T" . $item->tool_id . "T" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-            }
-            if ($item->emd_custom_page_id != 0) {
-                if ($clarity_allow->Mobile) {
-                    $configData["C" . $item->emd_custom_page_id . "M" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Desktop) {
-                    $configData["C" . $item->emd_custom_page_id . "D" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Tablet) {
-                    $configData["C" . $item->emd_custom_page_id . "T" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-            }
-            if ($item->is_tool_pages != 0) {
-                if ($clarity_allow->Mobile) {
-                    $configData["TA" . "M" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Desktop) {
-                    $configData["TA" . "D" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Tablet) {
-                    $configData["TA" . "T" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-            }
-            if ($item->is_custom_pages != 0) {
-                if ($clarity_allow->Mobile) {
-                    $configData["CA" . "M" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Desktop) {
-                    $configData["CA" . "D" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-                if ($clarity_allow->Tablet) {
-                    $configData["CA" . "T" . $clarity_allow->PremiumUser] = $item->show_percentage;
-                }
-            }
-        }
-        $configPath = config_path('emd_microsoft_clarity.php');
-        file_put_contents($configPath, '<?php return ' . var_export($configData, true) . ';');
         return true;
     }
 

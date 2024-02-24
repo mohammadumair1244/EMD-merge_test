@@ -57,7 +57,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="" class="form-label">Clarity Show Percentage</label>
                                     <input type="number" min="1" max="100" name="show_percentage"
-                                        class="form-control" placeholder="Clarity Show Percentage" value="" required="">
+                                        class="form-control" placeholder="Clarity Show Percentage" value="">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="" class="form-label">Select Filed Type</label>

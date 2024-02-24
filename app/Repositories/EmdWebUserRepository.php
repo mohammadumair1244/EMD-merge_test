@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Http\Controllers\EmdSendEmailController;
 use App\Http\Controllers\EmdUserProfileCommentController;
-use App\Http\Controllers\EmdWebUserController;
 use App\Interfaces\EmdWebUserInterface;
 use App\Models\EmdEmailSetting;
 use App\Models\EmdPricingPlan;
@@ -39,27 +38,15 @@ class EmdWebUserRepository implements EmdWebUserInterface
 
     public function view_web_users(): LengthAwarePaginator
     {
-        return $this->emd_web_user_model->withWhereHas('user')->whereNot('register_from', $this->emd_web_user_model::REGISTER_FROM_RANDOM)->orderByDESC('id')->paginate(100);
-    }
-    public function view_web_users_random_register(): LengthAwarePaginator
-    {
-        return $this->emd_web_user_model->withWhereHas('user')->where('register_from', $this->emd_web_user_model::REGISTER_FROM_RANDOM)->orderByDESC('id')->paginate(100);
-    }
-    public function view_web_users_type_wise($type)
-    {
-        $web_users = $this->emd_web_user_model->withWhereHas('user');
-        if ((int) $type == 1) {
-            $web_users = $web_users->where('is_web_premium', $type)->orWhere('is_api_premium', $type);
-        } elseif ((int) $type == 0) {
-            $web_users = $web_users->where('is_web_premium', $type)->where('is_api_premium', $type);
-        } else {
-            $web_users = $web_users->where('is_web_premium', $type);
-        }
-        return $web_users->whereNot('register_from', $this->emd_web_user_model::REGISTER_FROM_RANDOM)->orderByDESC('id')->paginate(100);
+        return $this->emd_web_user_model->whereHas('user', function ($query) {
+            return $query->whereNull('deleted_at');
+        })->orderByDESC('id')->paginate(100);
     }
     public function emd_web_user_date_filter_page($start_date, $end_date): EmdWebUser | Collection
     {
-        return $this->emd_web_user_model->withWhereHas('user')->whereNot('register_from', $this->emd_web_user_model::REGISTER_FROM_RANDOM)->whereBetween('created_at', [$start_date, $end_date])->get();
+        return $this->emd_web_user_model->whereHas('user', function ($query) {
+            return $query->whereNull('deleted_at');
+        })->whereBetween('created_at', [$start_date, $end_date])->get();
     }
     public function view_web_user_detail($id): array
     {
@@ -160,13 +147,6 @@ class EmdWebUserRepository implements EmdWebUserInterface
     public function get_user_ip_detail($ip): object
     {
         $data = [];
-        if ($ip == "127.0.0.1") {
-            $data['country'] = 'none';
-            $data['query'] = $ip;
-            $data['city'] = 'none';
-            $data['org'] = 'none';
-            return json_decode(json_encode($data));
-        }
         try {
             $response = Http::get('http://ip-api.com/json/' . $ip);
             $res = $response->collect()->only(['query', 'country', 'city', 'org'])->toJson();
@@ -202,23 +182,12 @@ class EmdWebUserRepository implements EmdWebUserInterface
         $this->emd_user_profile_comment_controller->add_profile_comment(array('user_id' => $user_id, 'action_type' => 'PasswordUpdate', 'detail' => $request['detail']));
         return true;
     }
-    public static function assign_register_plan($user_id)
-    {
-        $register_plan_available = EmdPricingPlan::where('is_custom', EmdPricingPlan::REGISTERED_PLAN)->active()->first();
-        if ($register_plan_available) {
-            $data2['id'] = $register_plan_available->id;
-            $data2['order_status'] = EmdUserTransaction::OS_REGISTER_PLAN;
-            EmdUserTransactionRepository::assign_plan_to_user($data2, $user_id, plan_id: true);
-            EmdWebUser::where('user_id', $user_id)->update(['is_web_premium' => EmdWebUser::FREE_PLAN_USER]);
-        }
-    }
     public function emd_callback_from_google($request, $ip): bool
     {
         try {
             $user = Socialite::driver('google')->user();
             $finduser = $this->user_model->where('email', $user->email)->first();
             if ($finduser) {
-                $this->emd_web_user_model->where('user_id', $finduser->id)->update(['last_login' => now(), 'login_ip' => $ip]);
                 Auth::guard('web_user_sess')->login($finduser);
                 return true;
             } else {
@@ -242,7 +211,7 @@ class EmdWebUserRepository implements EmdWebUserInterface
 
                         $web_user['user_id'] = $register_user->id;
                         $web_user['social_id'] = $user->id;
-                        $web_user['register_from'] = $this->emd_web_user_model::REGISTER_FROM_GOOGLE;
+                        $web_user['register_from'] = 'google';
                         $web_user['api_key'] = sha1(md5($user->email . ":" . time()));
                         $web_user['is_web_premium'] = $this->emd_web_user_model::FREE_USER;
                         $web_user['is_api_premium'] = $this->emd_web_user_model::FREE_USER;
@@ -251,11 +220,15 @@ class EmdWebUserRepository implements EmdWebUserInterface
                         $web_user['city'] = @$ip_detail->city ?: '';
                         $web_user['browser'] = Agent::browser() ?: '';
                         $web_user['device'] = @$device_name ?: '';
-                        $web_user['last_login'] = now();
-                        $web_user['login_ip'] = @$ip ?? '127.0.0.1';
                         $this->emd_web_user_model->create($web_user);
 
-                        self::assign_register_plan($register_user->id);
+                        $register_plan_available = $this->emd_pricing_plan_model->where('is_custom', $this->emd_pricing_plan_model::REGISTERED_PLAN)->active()->first();
+                        if ($register_plan_available) {
+                            $data2['product_no'] = $register_plan_available->paypro_product_id;
+                            $data2['order_status'] = $this->emd_user_transaction_model::OS_REGISTER_PLAN;
+                            EmdUserTransactionRepository::assign_plan_to_user($data2, $register_user->id);
+                            $this->emd_web_user_model->where('user_id', $register_user->id)->update(['is_web_premium' => $this->emd_web_user_model::FREE_PLAN_USER]);
+                        }
 
                         Auth::guard('web_user_sess')->login($register_user);
                         DB::commit();
@@ -280,7 +253,7 @@ class EmdWebUserRepository implements EmdWebUserInterface
         return true;
     }
 
-    public function emd_register_with_web($request, $ip, $register_from): array
+    public function emd_register_with_web($request, $ip): array
     {
         $user = $this->user_model->where('email', $request['email']);
         $finduser = $user->first();
@@ -300,7 +273,7 @@ class EmdWebUserRepository implements EmdWebUserInterface
             if ($emd_email_setting->is_active) {
                 $token = substr(sha1(md5($request['email'] . ":" . time())), 0, 90);
                 $new_user['remember_token'] = $token;
-                $emd_verify_account_slug = config('emd_setting_keys.emd_verify_account_slug') ?: "emd-verify-account";
+                $emd_verify_account_slug = @get_setting_by_key("emd_verify_account_slug")->value ?: "emd-verify-account";
                 $verify_link = url($emd_verify_account_slug) . "/" . $token;
                 $link_url = "<a href='{$verify_link}'>{$verify_link}</a>";
                 $html_body = @$emd_email_setting->template ?: "Hi @name Click to link for verify account @verify_link";
@@ -315,12 +288,11 @@ class EmdWebUserRepository implements EmdWebUserInterface
 
             $device_name = $this->get_user_device_detail();
             $ip_detail = $this->get_user_ip_detail($ip);
-            $generate_api_key = sha1(md5($request['email'] . ":" . time()));
 
             $web_user['user_id'] = $register_user->id;
             $web_user['social_id'] = 0;
-            $web_user['register_from'] = $register_from;
-            $web_user['api_key'] = $generate_api_key;
+            $web_user['register_from'] = 'web';
+            $web_user['api_key'] = sha1(md5($request['email'] . ":" . time()));
             $web_user['is_web_premium'] = $this->emd_web_user_model::FREE_USER;
             $web_user['is_api_premium'] = $this->emd_web_user_model::FREE_USER;
             $web_user['ip'] = @$ip ?: '';
@@ -328,24 +300,22 @@ class EmdWebUserRepository implements EmdWebUserInterface
             $web_user['city'] = @$ip_detail?->city ?: '';
             $web_user['browser'] = Agent::browser() ?: '';
             $web_user['device'] = @$device_name ?: '';
-            $web_user['last_login'] = now();
-            $web_user['login_ip'] = @$ip ?? '127.0.0.1';
             $this->emd_web_user_model->create($web_user);
 
-            self::assign_register_plan($register_user->id);
-
-            DB::commit();
-            if ($register_from == $this->emd_web_user_model::REGISTER_FROM_WEB) {
-                Auth::guard('web_user_sess')->login($register_user);
-                return [true, config('emd-response-string.register_done')];
-            } else {
-                return [true, config('emd-response-string.register_done'), $generate_api_key];
+            $register_plan_available = $this->emd_pricing_plan_model->where('is_custom', $this->emd_pricing_plan_model::REGISTERED_PLAN)->active()->first();
+            if ($register_plan_available) {
+                $data2['product_no'] = $register_plan_available->paypro_product_id;
+                $data2['order_status'] = $this->emd_user_transaction_model::OS_REGISTER_PLAN;
+                EmdUserTransactionRepository::assign_plan_to_user($data2, $register_user->id);
+                $this->emd_web_user_model->where('user_id', $register_user->id)->update(['is_web_premium' => $this->emd_web_user_model::FREE_PLAN_USER]);
             }
+
+            Auth::guard('web_user_sess')->login($register_user);
+            DB::commit();
+            return [true, config('emd-response-string.register_done')];
         } catch (\Exception $e) {
             DB::rollback();
-            if ($register_from == $this->emd_web_user_model::REGISTER_FROM_WEB) {
-                Auth::guard('web_user_sess')->logout();
-            }
+            Auth::guard('web_user_sess')->logout();
             return [false, config('emd-response-string.register_try_again')];
         }
     }
@@ -379,19 +349,13 @@ class EmdWebUserRepository implements EmdWebUserInterface
             return [false, config('emd-response-string.update_pass_email_not_avail')];
         }
     }
-    public function emd_login_with_web($request, $ip, $login_from): array
+    public function emd_login_with_web($request): array
     {
         $finduser = $this->user_model->where('email', $request['email'])->where('admin_level', $this->user_model::WEB_REGISTER)->first();
         if ($finduser) {
             if (password_verify($request['password'], $finduser->password)) {
-                $this->emd_web_user_model->where('user_id', $finduser->id)->update(['last_login' => now(), 'login_ip' => $ip]);
-                if ($login_from == $this->emd_web_user_model::REGISTER_FROM_WEB) {
-                    Auth::guard('web_user_sess')->login($finduser);
-                    return [true, config('emd-response-string.login_done')];
-                } else {
-                    $web_user_get = $this->emd_web_user_model->where('user_id', $finduser->id)->first();
-                    return [true, config('emd-response-string.login_done'), @$web_user_get?->api_key];
-                }
+                Auth::guard('web_user_sess')->login($finduser);
+                return [true, config('emd-response-string.login_done')];
             } else {
                 return [false, config('emd-response-string.login_pass_wrong')];
             }
@@ -408,7 +372,7 @@ class EmdWebUserRepository implements EmdWebUserInterface
                 $token = substr(sha1(md5($finduser->email . time())), 0, 90);
                 $finduser->remember_token = $token;
                 $finduser->save();
-                $emd_forgot_password_slug = config('emd_setting_keys.emd_forgot_password_slug') ?: "emd-forgot-password";
+                $emd_forgot_password_slug = @get_setting_by_key("emd_forgot_password_slug")->value ?: "emd-forgot-password";
                 $forgot_link = url($emd_forgot_password_slug) . "/" . $token;
                 $link_url = "<a href='{$forgot_link}'>{$forgot_link}</a>";
                 $html_body = @$emd_email_setting->template ?: "Hi @name Click to link for forgot password @forgot_link";
@@ -422,10 +386,6 @@ class EmdWebUserRepository implements EmdWebUserInterface
         } else {
             return [false, config('emd-response-string.forgot_pass_email_not_avail')];
         }
-    }
-    public function emd_user_info($api_key): ?EmdWebUser
-    {
-        return $this->emd_web_user_model->with('user')->where('api_key', $api_key)->first();
     }
     public function emd_user_account_delete(): array
     {
@@ -442,11 +402,11 @@ class EmdWebUserRepository implements EmdWebUserInterface
             if ($this->EmdIsUserPremium() == 1 && $emd_cancel_membership_email_setting != null) {
                 $emd_user_transaction = $this->emd_user_transaction_model->where('user_id', $finduser->id);
                 if ($emd_user_transaction->latest()->first()?->renewal_type == $this->emd_user_transaction_model::RENEWAL_AUTO) {
-                    $html_body_2 = @$emd_cancel_membership_email_setting->template ?: "<p>Hi @name</p><p>account email @account_email</p><p>All transaction order no @order_no</p>";
+                    $html_body_2 = @$emd_cancel_membership_email_setting->template ?: "<p>Hi @name</p><p>account email @account_email</p><p>All transaction order no @order_no</p><p>Request for website @website plan cancel</p><p>Request for API @api plan cancel</p>";
                     $html_body_2 = str_replace("@name", $finduser->name, $html_body_2);
                     $html_body_2 = str_replace("@account_email", $finduser->email, $html_body_2);
-                    $html_body_2 .= "Request for <b>Website</b> plan cancel <br>";
-                    $html_body_2 .= "Request for <b>API</b> plan cancel <br>";
+                    $html_body_2 = str_replace("@website", ($request['website'] ?? 'no'), $html_body_2);
+                    $html_body_2 = str_replace("@api", ($request['api'] ?? 'no'), $html_body_2);
                     $html_body_2 = str_replace("@order_no", ($emd_user_transaction->pluck('order_no')), $html_body_2);
                     $html_body_2 = $html_body_2 . "<p>Must Cancel Membership because User Delete his/her Account. OR Restore his/her Account from Admin Side</p>";
                     $this->emd_send_email_controller::sendToEmail($finduser->email, $emd_cancel_membership_email_setting->send_from, $emd_cancel_membership_email_setting->subject, $html_body_2, $emd_cancel_membership_email_setting->receiver_email);
@@ -464,15 +424,11 @@ class EmdWebUserRepository implements EmdWebUserInterface
         if ($emd_email_setting->is_active) {
             $finduser = $this->user_model->where('id', auth()->guard('web_user_sess')->user()->id)->where('admin_level', $this->user_model::WEB_REGISTER)->first();
             $emd_user_transaction = $this->emd_user_transaction_model->where('user_id', $finduser->id)->pluck('order_no');
-            $html_body = @$emd_email_setting->template ?: "<p>Hi @name</p><p>account email @account_email</p><p>All transaction order no @order_no</p>";
+            $html_body = @$emd_email_setting->template ?: "<p>Hi @name</p><p>account email @account_email</p><p>All transaction order no @order_no</p><p>Request for website @website plan cancel</p><p>Request for API @api plan cancel</p>";
             $html_body = str_replace("@name", $finduser->name, $html_body);
             $html_body = str_replace("@account_email", $finduser->email, $html_body);
-            if (@$request['website']) {
-                $html_body .= "Request for <b>Website</b> plan cancel <br>";
-            }
-            if (@$request['api']) {
-                $html_body .= "Request for <b>API</b> plan cancel <br>";
-            }
+            $html_body = str_replace("@website", ($request['website'] ?? 'no'), $html_body);
+            $html_body = str_replace("@api", ($request['api'] ?? 'no'), $html_body);
             $html_body = str_replace("@order_no", ($emd_user_transaction), $html_body);
             $this->emd_send_email_controller::sendToEmail($finduser->email, $emd_email_setting->send_from, $emd_email_setting->subject, $html_body, $emd_email_setting->receiver_email);
             return [true, config('emd-response-string.plan_cancellation_request_send')];
@@ -498,11 +454,8 @@ class EmdWebUserRepository implements EmdWebUserInterface
             return [false, config('emd-response-string.reset_pass_invalid_token')];
         }
     }
-    public static function EmdIsUserPremium(bool $web = false, bool $api = false, string | null $api_key = null): int
+    public static function EmdIsUserPremium(int $web = 0, int $api = 0, string | null $api_key = null): int
     {
-        if (EmdWebUserController::$is_user_premium !== null && $api == 0 && $api_key == null) {
-            return EmdWebUserController::$is_user_premium;
-        }
         if ($api_key != null) {
             if ($web) {
                 return EmdWebUser::where("api_key", $api_key ?: '')->first()?->is_web_premium ?: 0;
@@ -520,17 +473,15 @@ class EmdWebUserRepository implements EmdWebUserInterface
             return 0;
         }
     }
-    public static function EmdAvailableQuery(bool $api = false, bool $both_web_api = false, bool $separate = false, string | null $api_key = null): int | array
+    public static function EmdAvailableQuery(int $api = 0, int $both_web_api = 0, bool $separate = false, string | null $api_key = null): int | array
     {
         if (auth()->guard('web_user_sess')->check() || $api_key != null) {
             if ($api_key != null) {
-                $user_id = EmdWebUser::where('api_key', $api_key)->first()?->user_id ?: 0;
+                $user_id = EmdWebUser::where('api_key', $api_key)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->first()?->user_id ?: 0;
             } else {
                 $user_id = auth()->guard('web_user_sess')->id();
             }
-            if ($user_id == 0) {
-                return 0;
-            }
+
             $is_api = match (true) {
                 $both_web_api => [EmdPricingPlan::WEB_PLAN, EmdPricingPlan::API_PLAN, EmdPricingPlan::WEB_AND_API_PLAN],
                 $api => [EmdPricingPlan::API_PLAN, EmdPricingPlan::WEB_AND_API_PLAN],
@@ -550,7 +501,7 @@ class EmdWebUserRepository implements EmdWebUserInterface
             return 0;
         }
     }
-    public static function emd_available_query_row(int | null | array | string $tool_id, int $user_id, bool $type = true, int $api = 0, string | null $tool_key = null): ?EmdUserTransactionAllow
+    public static function emd_available_query_row(int | null $tool_id, int $user_id, bool $type = true, int $api = 0): ?EmdUserTransactionAllow
     {
         $is_api = match ((int) $api) {
             1 => [EmdPricingPlan::API_PLAN, EmdPricingPlan::WEB_AND_API_PLAN],
@@ -562,100 +513,45 @@ class EmdWebUserRepository implements EmdWebUserInterface
             })->where('expiry_date', '>=', date("Y-m-d"))->where('is_refund', EmdUserTransaction::TRAN_RUNNING)->where('order_status', EmdUserTransaction::OS_PROCESSED);
         });
         if ($tool_id != null) {
-            if (gettype($tool_id) != "array") {
-                $tool_ids = explode(',', $tool_id);
-            } else {
-                $tool_ids = $tool_id;
-            }
-            $tool_ids[] = '0';
-            $is_available_plan = $is_available_plan->whereIn('tool_id', $tool_ids);
+            $is_available_plan = $is_available_plan->where('tool_id', $tool_id ?: 0);
         }
-        $is_available_plan = $is_available_plan->where('user_id', $user_id);
-        if ($tool_key == null || $tool_id != null) {
-            $is_available_plan = $is_available_plan->whereColumn('queries_limit', '>', 'queries_used');
-            if ($type) {
-                return $is_available_plan->first();
-            } else {
-                return $is_available_plan->skip(1)->first();
-            }
+        $is_available_plan = $is_available_plan->where('user_id', $user_id)->whereColumn('queries_limit', '>', 'queries_used');
+        if ($type) {
+            return $is_available_plan->first();
         } else {
-            $is_available_plan = $is_available_plan->get()->groupBy('emd_user_transaction_id')->map(function ($group, $emd_user_transaction_id) {
-                return [
-                    'sum_queries_limit' => $group->sum('queries_limit'),
-                    'sum_queries_used' => $group->sum('queries_used'),
-                    'emd_user_transaction_id' => $emd_user_transaction_id,
-                ];
-            });
-            foreach ($is_available_plan as $item_value) {
-                if ($item_value['sum_queries_limit'] > $item_value['sum_queries_used'] && (EmdUserTransactionAllow::where('user_id', $user_id)->where('emd_user_transaction_id', $item_value['emd_user_transaction_id'])->whereIn('tool_slug_key', ['all_web_tool', $tool_key])->first())) {
-                    if ($type) {
-                        return EmdUserTransactionAllow::where('user_id', $user_id)->where('emd_user_transaction_id', $item_value['emd_user_transaction_id'])->whereColumn('queries_limit', '>', 'queries_used')->first();
-                    }
-                    $type = true;
-                }
-            }
-            return null;
+            return $is_available_plan->skip(1)->first();
         }
     }
-    public static function QueryLimitComplete(int $user_id): bool
-    {
-        $emd_user_transaction_rows = EmdUserTransaction::whereHas('emd_user_transaction_allows', function ($query) {
-            $query->select('emd_user_transaction_id')->groupBy('emd_user_transaction_id')->havingRaw('SUM(queries_limit) <= SUM(queries_used)');
-        })->where('user_id', $user_id)->where('expiry_date', '>=', date("Y-m-d"))->where('is_refund', EmdUserTransaction::TRAN_RUNNING)->where('order_status', EmdUserTransaction::OS_PROCESSED)->get();
-        foreach ($emd_user_transaction_rows as $item) {
-            $item->is_refund = EmdUserTransaction::TRAN_EXP_USED;
-            $item->save();
-        }
-        return $emd_user_transaction_rows->toArray() > 0 ? true : false;
-    }
-    public static function CheckNextTransaction($user_id, $is_api)
-    {
-        $available = EmdUserTransaction::whereHas('emd_pricing_plan', function ($query) use ($is_api) {
-            return $query->whereIn('is_api', [$is_api, EmdPricingPlan::WEB_AND_API_PLAN]);
-        })->where('is_refund', EmdUserTransaction::TRAN_RUNNING)->where('order_status', EmdUserTransaction::OS_PROCESSED)->where('expiry_date', '>=', date("Y-m-d"))->where('user_id', $user_id)->first();
-        return $available ? 1 : 0;
-    }
-    public static function EmdWebsiteQueryUse(int | null | array | string $tool_id = null, int $query_no = 1, ?string $api_key = null, bool $error_mess = false, bool $query_use = true, ?string $tool_key = null, bool $web = true, bool $remaining_query_detect = false): bool | array
+    public static function EmdWebsiteQueryUse(int | null $tool_id = null, int $query_no = 1, string | null $api_key = null, bool $error_mess = false, bool $query_use = true): bool | array
     {
         if (auth()->guard('web_user_sess')->check() || $api_key != null) {
+            $for_api_or_web = EmdPricingPlan::WEB_PLAN;
             if ($api_key != null) {
-                if ($web) {
-                    $is_web_premium = EmdWebUser::where('api_key', $api_key)->whereIn('is_web_premium', [EmdWebUser::PREMIUM_USER, EmdWebUser::FREE_PLAN_USER])->first();
-                    if (!$is_web_premium) {
-                        return $error_mess ? [false, config('emd-response-string.not_premium_user')] : false;
-                    }
-                    $user_id = $is_web_premium->user_id;
-                    $for_api_or_web = EmdPricingPlan::WEB_PLAN;
-                } else {
-                    $is_api_premium = EmdWebUser::where('api_key', $api_key)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->first();
-                    if (!$is_api_premium) {
-                        return $error_mess ? [false, config('emd-response-string.not_premium_for_api')] : false;
-                    }
-                    $user_id = $is_api_premium->user_id;
-                    $for_api_or_web = EmdPricingPlan::API_PLAN;
+                $is_api_premium = EmdWebUser::where('api_key', $api_key)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->first();
+                if (!$is_api_premium) {
+                    return $error_mess ? [false, config('emd-response-string.not_premium_for_api')] : false;
                 }
+                $user_id = $is_api_premium->user_id;
+                $for_api_or_web = EmdPricingPlan::API_PLAN;
             } else {
                 $user_id = auth()->guard('web_user_sess')->id();
-                $is_web_premium = EmdWebUser::where('user_id', $user_id)->whereIn('is_web_premium', [EmdWebUser::PREMIUM_USER, EmdWebUser::FREE_PLAN_USER])->first();
-                $for_api_or_web = EmdPricingPlan::WEB_PLAN;
+                $is_web_premium = EmdWebUser::where('user_id', $user_id)->where('is_web_premium', EmdWebUser::PREMIUM_USER)->first();
+                if ($is_web_premium == null) {
+                    $is_web_premium = EmdWebUser::where('user_id', $user_id)->where('is_web_premium', EmdWebUser::FREE_PLAN_USER)->first();
+                }
             }
 
             if (@$is_web_premium || @$is_api_premium) {
-                $is_available_query_row_first = self::emd_available_query_row(tool_id: $tool_id, user_id: $user_id, api: $for_api_or_web, tool_key: $tool_key);
+                $is_available_query_row_first = EmdWebUserRepository::emd_available_query_row(tool_id: $tool_id, user_id: $user_id, api: $for_api_or_web);
                 if ($is_available_query_row_first) {
                     if ((int) $is_available_query_row_first->queries_limit != 1) {
-                        if (self::EmdAvailableQuery(api: $for_api_or_web, api_key: $api_key) < $query_no) {
-                            if ($remaining_query_detect && $query_use) {
-                                $is_available_query_row_first->queries_used = $is_available_query_row_first->queries_limit;
-                                $is_available_query_row_first->save();
-                                return $error_mess ? [true, config('emd-response-string.remaining_query_detected')] : true;
-                            }
+                        if (EmdWebUserRepository::EmdAvailableQuery(api: $for_api_or_web, api_key: $api_key) < $query_no) {
                             return $error_mess ? [false, config('emd-response-string.query_limit_is_less')] : false;
                         }
                         $first_query_deduction = $is_available_query_row_first->queries_used + $query_no;
                         if (($is_available_query_row_first->queries_limit - $is_available_query_row_first->queries_used) < $query_no) {
                             $remaining_previous_row_query = $query_no - ($is_available_query_row_first->queries_limit - $is_available_query_row_first->queries_used);
-                            $is_available_query_row_second = self::emd_available_query_row(tool_id: $tool_id, user_id: $user_id, type: false, api: $for_api_or_web, tool_key: $tool_key);
+                            $is_available_query_row_second = EmdWebUserRepository::emd_available_query_row(tool_id: $tool_id, user_id: $user_id, type: false, api: $for_api_or_web);
                             if ($is_available_query_row_second) {
                                 $is_available_query_row_second->queries_used = $is_available_query_row_second->queries_used + $remaining_previous_row_query;
                                 if ($query_use) {
@@ -663,12 +559,7 @@ class EmdWebUserRepository implements EmdWebUserInterface
                                 }
                                 $first_query_deduction = $is_available_query_row_first->queries_limit;
                             } else {
-                                if ($remaining_query_detect && $query_use) {
-                                    $is_available_query_row_first->queries_used = $is_available_query_row_first->queries_limit;
-                                    $is_available_query_row_first->save();
-                                    return $error_mess ? [true, config('emd-response-string.remaining_query_detected_for_this_tool')] : true;
-                                }
-                                return $error_mess ? [false, config('emd-response-string.query_limit_is_less_for_this_tool')] : false;
+                                return $error_mess ? [false, config('emd-response-string.query_limit_is_less')] : false;
                             }
                         }
                         $is_available_query_row_first->queries_used = $first_query_deduction;
@@ -678,25 +569,30 @@ class EmdWebUserRepository implements EmdWebUserInterface
                     }
                     return $error_mess ? [true, $query_no > 0 ? config('emd-response-string.query_detected') : config('emd-response-string.query_add_to_back')] : true;
                 } else {
-                    $yes_expired_now = self::QueryLimitComplete($user_id);
-                    if ($yes_expired_now) {
-                        $plan_exist = self::CheckNextTransaction(user_id: $user_id, is_api: $for_api_or_web);
-                        if (@$is_api_premium) {
-                            $is_api_premium->is_api_premium = $plan_exist == 0 ? EmdWebUser::FREE_USER : $is_api_premium->is_api_premium;
-                            $is_api_premium->save();
-                        } else {
-                            $is_web_premium->is_web_premium = $plan_exist == 0 ? EmdWebUser::FREE_USER : $is_web_premium->is_web_premium;
-                            $is_web_premium->save();
-                        }
+                    $complete_use_plan_row = EmdUserTransaction::whereHas('emd_pricing_plan', function ($query_run) use ($for_api_or_web) {
+                        return $query_run->whereIn('is_api', [$for_api_or_web, EmdPricingPlan::WEB_AND_API_PLAN]);
+                    });
+                    if ($tool_id != null) {
+                        $complete_use_plan_row = $complete_use_plan_row->whereHas('emd_user_transaction_allows', function ($query_check) use ($tool_id) {
+                            return $query_check->where('tool_id', $tool_id);
+                        });
                     }
-                    return $error_mess ? [true, config('emd-response-string.query_not_avail_set_free_mode')] : true;
+                    $complete_use_plan_row = $complete_use_plan_row->where('is_refund', EmdUserTransaction::TRAN_RUNNING)->where('order_status', EmdUserTransaction::OS_PROCESSED)->where('expiry_date', '>=', date("Y-m-d"))->where('user_id', $user_id)->first();
+                    if ($complete_use_plan_row) {
+                        $complete_use_plan_row->is_refund = EmdUserTransaction::TRAN_EXP_USED;
+                        $complete_use_plan_row->save();
+                    }
+                    if (@$is_api_premium) {
+                        $is_api_premium->is_api_premium = EmdWebUser::FREE_USER;
+                        $is_api_premium->save();
+                    } else {
+                        $is_web_premium->is_web_premium = EmdWebUser::FREE_USER;
+                        $is_web_premium->save();
+                    }
+                    return $error_mess ? [false, config('emd-response-string.query_not_avail_set_free_mode')] : false;
                 }
             } else {
-                if ($web) {
-                    return $error_mess ? [true, config('emd-response-string.not_premium_user')] : true;
-                } else {
-                    return $error_mess ? [true, config('emd-response-string.not_premium_for_api')] : true;
-                }
+                return $error_mess ? [true, config('emd-response-string.not_premium_user')] : true;
             }
         } else {
             return $error_mess ? [true, config('emd-response-string.free_user')] : true;

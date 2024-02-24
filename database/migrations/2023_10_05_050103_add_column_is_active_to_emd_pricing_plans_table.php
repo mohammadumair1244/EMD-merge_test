@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('emd_pricing_plans', function (Blueprint $table) {
-            $table->tinyInteger('is_active')->default(0)->after('is_api');
+            $table->tinyInteger('is_active')->nullable()->default(0)->after('is_api');
         });
     }
 

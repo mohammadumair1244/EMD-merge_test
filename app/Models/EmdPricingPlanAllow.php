@@ -14,7 +14,6 @@ class EmdPricingPlanAllow extends Model implements Auditable
     protected $fillable = [
         'emd_pricing_plan_id',
         'tool_id',
-        'tool_slug_key',
         'queries_limit',
         'allow_modes',
         'allow_json',

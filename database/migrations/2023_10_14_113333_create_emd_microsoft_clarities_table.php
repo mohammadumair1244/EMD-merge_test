@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('emd_microsoft_clarities', function (Blueprint $table) {
             $table->id();
-            $table->integer("tool_id")->default(0)->comment('if 0 then not for specific tool');
-            $table->integer("emd_custom_page_id")->default(0)->comment('if 0 then not for specific custom page');
-            $table->tinyInteger("is_tool_pages")->default(0)->comment('for 1 means this key will be show in all tool pages');
-            $table->tinyInteger("is_custom_pages")->default(0)->comment('for 1 means this key will be show in all custom pages');
-            $table->tinyInteger("show_percentage")->default(0)->comment('no of percentage for show on page');
+            $table->integer("tool_id")->nullable()->default(0)->comment('if 0 then not for specific tool');
+            $table->integer("emd_custom_page_id")->nullable()->default(0)->comment('if 0 then not for specific custom page');
+            $table->tinyInteger("is_tool_pages")->nullable()->default(0)->comment('for 1 means this key will be show in all tool pages');
+            $table->tinyInteger("is_custom_pages")->nullable()->default(0)->comment('for 1 means this key will be show in all custom pages');
+            $table->tinyInteger("show_percentage")->nullable()->default(0)->comment('no of percentage for show on page');
             $table->longText('clarity_json')->nullable()->default(json_encode([]));
             $table->timestamps();
             $table->softDeletes();

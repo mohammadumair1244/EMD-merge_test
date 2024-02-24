@@ -23,7 +23,7 @@ class EmdToolAPI
         if (@$response[1] == "" || @$response[1] == null) {
             return response()->json(['error' => ["auth" => "Authorization token is empty"]], 401);
         }
-        if (@$response[1] != config('emd_setting_keys.emd_tool_api_key_for_staging')) {
+        if (@$response[1] != @get_setting_by_key("emd_tool_api_key_for_staging")->value) {
             return response()->json(['error' => ["auth" => "Invalid API Key"]], 401);
         }
 

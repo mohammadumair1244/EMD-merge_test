@@ -38,10 +38,9 @@ use Illuminate\Support\Facades\Route;
  */
 
 Route::get('hash/{hash}', [AdminController::class, 'setCookie']);
-Route::get('login', [AdminController::class, 'index'])->middleware(['admin_access', 'emd_admin_already_login'])->name('login');
-Route::post('login', [UserController::class, 'login'])->middleware(['admin_access', 'emd_admin_already_login'])->name('admin_login');
+Route::get('{login?}', [AdminController::class, 'index'])->middleware(['admin_access', 'guest'])->where('login', 'login')->name('login');
+Route::post('login', [UserController::class, 'login'])->middleware(['admin_access', 'guest'])->where('login', 'login')->name('admin_login');
 Route::middleware(['admin_access', 'auth:admin_sess'])->group(function () {
-    require __DIR__ . '/admin_custom.php';
     Route::controller(AdminController::class)->group(function () {
         Route::get('dashboard', 'dashboard')->name('admin.dashboard');
         // SETTING ROUTES
@@ -59,8 +58,6 @@ Route::middleware(['admin_access', 'auth:admin_sess'])->group(function () {
     Route::resource('blog', BlogController::class);
     //Tool Routes
     Route::controller(ToolController::class)->prefix('tool')->group(function () {
-        Route::get('parent', 'parent_tools')->name('tool.parent_tools');
-        Route::get('parent/{parent_id}', 'parent_wise_child_tools')->name('tool.parent_wise_child_tools');
         Route::get('trash', 'trash_list')->name('tool.trash_list');
         Route::get('permanent_destroy/{id}', 'tool_permanent_destroy')->name('tool.permanent_destroy');
         Route::get('restore/{id}', 'tool_restore')->name('tool.restore');
@@ -99,7 +96,7 @@ Route::middleware(['admin_access', 'auth:admin_sess'])->group(function () {
     Route::resource('contact', ContactController::class);
     // EMD Pricing Plans
     Route::prefix('emd-pricing-plan')->controller(EmdPricingPlanController::class)->group(function () {
-        Route::get('view/{type?}', 'view_pricing_plan')->name('emd_pricing_plan_view');
+        Route::get('view', 'view_pricing_plan')->name('emd_pricing_plan_view');
         Route::get('add', 'add_pricing_plan')->name('emd_pricing_plan_add');
         Route::post('create', 'create_pricing_plan')->name('emd_pricing_plan_create');
         Route::get('edit/{id}', 'edit_pricing_plan')->name('emd_pricing_plan_edit');
@@ -129,8 +126,6 @@ Route::middleware(['admin_access', 'auth:admin_sess'])->group(function () {
     // EMD web users
     Route::prefix('emd-web-user')->controller(EmdWebUserController::class)->group(function () {
         Route::get('view', 'view_web_users')->name('emd_view_web_users');
-        Route::get('random/view', 'view_web_users_random_register')->name('emd_view_random_web_users');        
-        Route::get('view/type/{type}', 'view_web_users_type_wise')->name('emd_view_web_users_type_wise');
         Route::post('view', 'emd_user_search_by_email')->name('emd_user_search_by_email');
         Route::get('trash', 'view_web_users_trash')->name('emd_view_web_users_trash');
         Route::get('detail/{id}', 'view_web_user_detail')->name('emd_view_web_user_detail');
@@ -159,7 +154,6 @@ Route::middleware(['admin_access', 'auth:admin_sess'])->group(function () {
         Route::get('date-filter/{start_date}/{end_date}', 'emd_transaction_date_filter_page');
         Route::get('search', 'emd_transaction_search_page')->name('emd_transaction_search_page');
         Route::post('search', 'emd_transaction_search_req')->name('emd_transaction_search_req');
-        Route::get('type-wise/{type}', 'emd_transaction_without_original')->name('emd_transaction_without_original');
         Route::get('{type?}', 'view_all_transaction')->name('emd_all_transaction');
     });
     // EMD get tool data from live website to staging
@@ -192,9 +186,7 @@ Route::middleware(['admin_access', 'auth:admin_sess'])->group(function () {
         Route::get('view', 'emd_laravel_log_page')->name('emd_laravel_log_page');
         Route::delete('view', 'emd_laravel_log_delete')->name('emd_laravel_log_delete');
         Route::post('view', 'emd_laravel_log_download')->name('emd_laravel_log_download');
-        Route::get('read/{file_name}', 'emd_laravel_log_read')->name('emd_laravel_log_read');
-        Route::get('migrate-status', 'emd_view_migrate_status_page')->name('emd_view_migrate_status_page');
-
+        Route::get('read', 'emd_laravel_log_read')->name('emd_laravel_log_read');
     });
     //EMD Feedbacks
     Route::prefix('emd-feedback')->controller(EmdFeedbackController::class)->group(function () {

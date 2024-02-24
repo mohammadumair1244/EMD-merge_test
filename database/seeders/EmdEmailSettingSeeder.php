@@ -57,7 +57,7 @@ class EmdEmailSettingSeeder extends Seeder
                 'receiver_email' => 'sandhyabasu202@gmail.com',
                 'send_from' => 'EMD Model',
                 'subject' => "Cancel Membership",
-                'template' => '<p>Hi @name</p><p>account email @account_email</p><p>All transaction order no @order_no</p>',
+                'template' => '<p>Hi @name</p><p>account email @account_email</p><p>All transaction order no @order_no</p><p>Request for website @website plan cancel</p><p>Request for API @api plan cancel</p>',
                 'is_active' => 0,
             ],
         ];

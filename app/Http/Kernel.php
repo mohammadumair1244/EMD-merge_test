@@ -66,11 +66,8 @@ class Kernel extends HttpKernel
         'admin_access' => \App\Http\Middleware\AdminAccess::class,
         'emd_web_query_use' => \App\Http\Middleware\EmdWebsiteQueryUse::class,
         'emd_web_modes_check' => \App\Http\Middleware\EmdWebsiteModesCheck::class,
-        'emd_tool_api_key' => \App\Http\Middleware\EmdToolAPI::class,
+        'emd_tool_api' => \App\Http\Middleware\EmdToolAPI::class,
         'emd_is_user_premium' => \App\Http\Middleware\EmdIsUserPremium::class,
         'emd_allow_post_method' => \App\Http\Middleware\EmdAllowPostMethodMiddleware::class,
-        'emd_admin_already_login' => \App\Http\Middleware\EmdAdminAlreadyLoginMiddleware::class,
-        'emd_mobile_api_key' => \App\Http\Middleware\EmdMobileAPIKeyMiddleware::class,
-        'emd_version_api_key' => \App\Http\Middleware\EmdVersionAPIKeyMiddleware::class,
     ];
 }

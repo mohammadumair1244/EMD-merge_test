@@ -43,8 +43,6 @@
                                     @else
                                         {{ @$item->tool->name ?? 'All Web Tools' }}
                                     @endcan
-                                    <br>
-                                    <b>{{ $item->tool_slug_key }}</b>
                                 </td>
                                 <td>{{ $item->queries_limit == 1 ? 'Unlimited' : ($item->queries_limit ?: 'None') }}</td>
                                 <td class="custom-fields">

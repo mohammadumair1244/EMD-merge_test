@@ -23,20 +23,12 @@ class EmdWebUser extends Model implements Auditable
         'city',
         'browser',
         'device',
-        'last_login',
-        'login_ip',
     ];
 
     public const FREE_USER = 0;
     public const PREMIUM_USER = 1;
     public const FREE_PLAN_USER = 2;
     public const PREMIUM_TYPE = ['Free', 'Premium', 'Free Plan'];
-
-    public const REGISTER_FROM_WEB = 'web';
-    public const REGISTER_FROM_MOBILE = 'mobile';
-    public const REGISTER_FROM_GOOGLE = 'google';
-    public const REGISTER_FROM_RANDOM = 'random';
-    public const REGISTER_FROM_PAYMENT_TIME = 'running';
 
     public function user()
     {

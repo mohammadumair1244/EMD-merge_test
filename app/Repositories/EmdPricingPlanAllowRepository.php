@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Repositories;
 
 use App\Interfaces\EmdPricingPlanAllowInterface;
@@ -35,7 +34,6 @@ class EmdPricingPlanAllowRepository implements EmdPricingPlanAllowInterface
             $allow_json[$val] = (int) $request['default_values'][$key];
         }
         $request['allow_json'] = json_encode($allow_json);
-        $request['tool_slug_key'] = str_replace('-', '_', $this->tool_model->where('id', $request['tool_id'])->first()?->slug ?? 'all-web-tool');
         $this->emd_pricing_plan_allow_model->create($request->except(["_token", 'keys', 'default_values', 'query']));
         return true;
     }
@@ -54,9 +52,6 @@ class EmdPricingPlanAllowRepository implements EmdPricingPlanAllowInterface
     public function update_pricing_plan_allow($request, $plan_id, $id): bool
     {
         $allow_json = [];
-        if (empty(@$request['keys'])) {
-            return false;
-        }
         foreach ($request['keys'] as $key => $val) {
             $allow_json[$val] = (int) $request['default_values'][$key];
         }

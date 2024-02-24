@@ -15,9 +15,9 @@ class EmdPricingPlanRepository implements EmdPricingPlanInterface
         protected EmdPlanZonePrice $emd_plan_zone_price_model) {
     }
 
-    public function view_pricing_plan($type): EmdPricingPlan | Collection
+    public function view_pricing_plan(): EmdPricingPlan | Collection
     {
-        return $this->emd_pricing_plan_model->withSum('emd_pricing_plan_allows', 'queries_limit')->where('is_mobile', $type)->get();
+        return $this->emd_pricing_plan_model->withSum('emd_pricing_plan_allows', 'queries_limit')->get();
     }
     public function create_pricing_plan($request): bool
     {
@@ -37,7 +37,7 @@ class EmdPricingPlanRepository implements EmdPricingPlanInterface
     }
     public function trash_pricing_plan(): EmdPricingPlan | Collection
     {
-        return $this->emd_pricing_plan_model->onlyTrashed()->whereNot('is_custom', $this->emd_pricing_plan_model::USER_CREATED_PLAN)->get();
+        return $this->emd_pricing_plan_model->onlyTrashed()->get();
     }
     public function destroy_pricing_plan($id): bool
     {
@@ -59,15 +59,16 @@ class EmdPricingPlanRepository implements EmdPricingPlanInterface
         $this->emd_pricing_plan_model->where('id', $request->id)->update(['ordering_no' => $request->ordering_no]);
         return true;
     }
-    public static function emd_our_pricing_plans_static(string $ip = "127.0.0.1", null | int | string $id = null, null | string $unique_key = null, int $is_custom = 0, bool $all_unique_key_plans = false): Collection | EmdPricingPlan | null
+    public function emd_our_pricing_plans($ip): EmdPricingPlan | Collection
     {
-        $emd_plan_zone_price_model_rows = [];
-        if ($is_custom === 0) {
-            $emd_plan_zone_price_model_rows = EmdPlanZonePrice::get()->toArray();
-        }
+        return $this->emd_our_pricing_plans_static(ip: $ip);
+    }
+    public static function emd_our_pricing_plans_static(string $ip, null | int | string $id = null, null | string $unique_key = null): Collection | EmdPricingPlan | null
+    {
+        $emd_plan_zone_price_model_rows = EmdPlanZonePrice::get();
         $emd_pricing_plans = EmdPricingPlan::with('emd_pricing_plan_allows')->withSum('emd_pricing_plan_allows AS max_queries_limit', 'queries_limit')->withCount('emd_plan_zone_price AS is_zone_price');
         $country_code = "None";
-        if (count($emd_plan_zone_price_model_rows) > 0 && $ip != "127.0.0.1") {
+        if (count($emd_plan_zone_price_model_rows) > 0) {
             $response = Http::get('http://ip-api.com/json/' . $ip);
             $res = @$response->collect()->only(['countryCode'])->toJson();
             $detail_res = @json_decode($res);
@@ -78,21 +79,20 @@ class EmdPricingPlanRepository implements EmdPricingPlanInterface
                 });
             });
         }
-        $emd_pricing_plans = $emd_pricing_plans->where('is_custom', $is_custom)->active()->website();
+        $emd_pricing_plans = $emd_pricing_plans->where('is_custom', EmdPricingPlan::SIMPLE_PLAN)->active();
         if ($id != null) {
             return $emd_pricing_plans->where('id', $id)->first();
         } elseif ($unique_key != null) {
-            $get_unique_key_plans = $emd_pricing_plans->where('unique_key', $unique_key);
-            if ($all_unique_key_plans) {
-                return $get_unique_key_plans->orderBy("ordering_no")->get();
-            } else {
-                return $get_unique_key_plans->first();
-            }
+            return $emd_pricing_plans->where('unique_key', $unique_key)->first();
         } else {
             return $emd_pricing_plans->orderBy("ordering_no")->get();
         }
     }
 
+    public function emd_our_custom_pricing_plans($request): EmdPricingPlan | Collection
+    {
+        return $this->emd_pricing_plan_model->with('emd_pricing_plan_allows')->withSum('emd_pricing_plan_allows AS max_queries_limit', 'queries_limit')->where('is_custom', $this->emd_pricing_plan_model::SIMPLE_PLAN)->get();
+    }
     public function emd_pricing_plan_show_hide($id, $is_active): bool
     {
         $this->emd_pricing_plan_model->where('id', $id)->update(['is_active' => (int) $is_active]);

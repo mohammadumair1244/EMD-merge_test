@@ -8,9 +8,10 @@ use App\Models\Tool;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ZipArchive;
+use Smalot\PdfParser\Parser;
 
 class ToolController extends Controller
 {
@@ -46,7 +47,6 @@ class ToolController extends Controller
             }
             return view('admin.tools.add')->with('images', $html);
         }
-
     }
 
     /**
@@ -98,12 +98,9 @@ class ToolController extends Controller
             'content' => $content_json,
             'is_home' => $is_home,
         ]);
-
         if ($request->parent == 0) {
             Tool::where('id', $tool->id)->update(['parent_id' => $tool->id]);
         }
-        $created_tool = Tool::where('id', $tool->id)->first();
-        $this->update_tool_redis($created_tool);
         if ($tool) {
             return back();
         }
@@ -138,7 +135,6 @@ class ToolController extends Controller
             'images' => $images,
             'tools' => $tools,
         ]);
-
     }
 
     /**
@@ -179,7 +175,6 @@ class ToolController extends Controller
         $content_json = json_encode($contentArr);
         $tool->content = $content_json;
         $tool->save();
-        $this->update_tool_redis($tool);
         return back();
     }
 
@@ -192,22 +187,10 @@ class ToolController extends Controller
     public function destroy(Tool $tool)
     {
         $this->authorize('delete_tool');
-        $this->delete_tool_redis($tool);
         $tool->delete();
         return back();
     }
-    public function parent_tools()
-    {
-        $this->authorize('view_tool');
-        $tools = Tool::select('id', 'name', 'parent_id', 'lang', 'slug')->with('parent')->whereColumn('id', 'parent_id')->oldest()->get();
-        return view('admin.tools.parent_view')->with('tools', $tools);
-    }
-    public function parent_wise_child_tools($parent_id)
-    {
-        $this->authorize('view_tool');
-        $tools = Tool::select('id', 'name', 'parent_id', 'lang', 'slug')->with('parent')->where('parent_id', $parent_id)->orderBy('id', "ASC")->get();
-        return view('admin.tools.child_view')->with('tools', $tools);
-    }
+
     public function trash_list()
     {
         $this->authorize('view_trash_tool');
@@ -217,8 +200,6 @@ class ToolController extends Controller
     public function tool_permanent_destroy($id)
     {
         $this->authorize('delete_tool');
-        $tool = Tool::onlyTrashed()->find($id);
-        $this->delete_tool_redis($tool);
         Tool::onlyTrashed()->find($id)->forceDelete();
         return back();
     }
@@ -226,8 +207,6 @@ class ToolController extends Controller
     public function tool_restore($id)
     {
         $this->authorize('restore_tool');
-        $tool = Tool::withTrashed()->find($id);
-        $this->update_tool_redis($tool);
         Tool::withTrashed()->find($id)->restore();
         return back();
     }
@@ -262,7 +241,6 @@ class ToolController extends Controller
             $tool->content = $request->upload_json;
         }
         $tool->save();
-        $this->update_tool_redis($tool);
         return redirect()->back();
     }
     public function tool_audit($id)
@@ -301,7 +279,6 @@ class ToolController extends Controller
                     break 1;
                 }
             }
-            $this->update_tool_redis($tool);
         }
         return redirect()->back()->with('message', 'Successfully Add Key in all child tool');
 
@@ -361,9 +338,9 @@ class ToolController extends Controller
     {
         $this->authorize('get_live_tool');
         $tools = [];
-        if (config('emd_setting_keys.emd_tool_api_route_for_live') != "" && config('emd_setting_keys.emd_tool_api_key_for_live') != "") {
-            $token = trim(config('emd_setting_keys.emd_tool_api_key_for_live'));
-            $base_url = trim(config('emd_setting_keys.emd_tool_api_route_for_live'));
+        if (@get_setting_by_key('emd_tool_api_route_for_live')->value != "" && @get_setting_by_key('emd_tool_api_key_for_live')->value != "") {
+            $token = trim(get_setting_by_key('emd_tool_api_key_for_live')->value);
+            $base_url = trim(get_setting_by_key('emd_tool_api_route_for_live')->value);
             $response = Http::withToken($token)->post($base_url . "/api/get-tools-list");
             if ($response->successful()) {
                 $tools = $response->json()['tools'];
@@ -374,9 +351,9 @@ class ToolController extends Controller
     public function emd_get_single_tool_api(Request $request)
     {
         $this->authorize('get_live_tool');
-        if (config('emd_setting_keys.emd_tool_api_route_for_live') != "" && config('emd_setting_keys.emd_tool_api_key_for_live') != "") {
-            $token = trim(config('emd_setting_keys.emd_tool_api_key_for_live'));
-            $base_url = trim(config('emd_setting_keys.emd_tool_api_route_for_live'));
+        if (@get_setting_by_key('emd_tool_api_route_for_live')->value != "" && @get_setting_by_key('emd_tool_api_key_for_live')->value != "") {
+            $token = trim(get_setting_by_key('emd_tool_api_key_for_live')->value);
+            $base_url = trim(get_setting_by_key('emd_tool_api_route_for_live')->value);
             $response = Http::withToken($token)->post($base_url . "/api/get-tools-list", [
                 'lang' => $request->d_lang,
                 'slug' => $request->d_slug,
@@ -392,70 +369,115 @@ class ToolController extends Controller
         return response()->json(['d_loop' => $request->d_loop, 'result' => $tool]);
     }
 
-    public function tool_canonicals_redis(int $parent_id)
+    public function getText(Request $request)
     {
-        try {
-            $links = Tool::select('name', 'slug', 'lang')->where('parent_id', $parent_id)->get();
-            Redis::del('tool_canonicals_redis_' . $parent_id);
-            Redis::set('tool_canonicals_redis_' . $parent_id, json_encode($links->toArray()));
-        } catch (\Throwable $th) {
 
+        $file = $request->file('file');
+
+        $validExtensions = ['docx', 'txt' , 'pdf'];
+        $extension = $file->getClientOriginalExtension();
+        if (!in_array($extension, $validExtensions)) {
+            return response()->json(['error' => 'Extensión de archivo inválida. Las extensiones permitidas son: docx, txt y pdf','head'=>'Archivo inválido'], 400);
+        }
+
+        $path = $request->file('file')->storeAs(
+            'files',
+            time() . '_' . $request->file('file')->getClientOriginalName()
+        );
+
+        if ($request->file('file')->getClientOriginalExtension() == 'docx') {
+            $text = $this->docx_to_txt($path);
+            Storage::delete($path);
+            return $text;
+        } elseif ($request->file('file')->getClientOriginalExtension() == 'doc') {
+            $text = $this->docx_to_txt($request, "doc");
+            Storage::delete($path);
+            return $text;
+        } elseif ($request->file('file')->getClientOriginalExtension() == 'txt') {
+            $text = $this->readTXTFile($path);
+            Storage::delete($path);
+            return $text;
+        } elseif ($request->file('file')->getClientOriginalExtension() == 'pdf') {
+            $text = $this->get_text_pdf($path);
+            Storage::delete($path);
+            return $text;
         }
     }
 
-    public function update_tool_redis($tool)
+    protected function docx_to_txt($filePath)
     {
-        if ($tool->is_home == 1) {
-            try {
-                Redis::del('home_tool_native');
-                Redis::hMset('home_tool_native', $tool->toArray());
-            } catch (\Throwable $th) {
-
+        $zip = new ZipArchive;
+        $dataFile = 'word/document.xml';
+        
+        if (true === $zip->open(Storage::path($filePath))) {
+            if (($index = $zip->locateName($dataFile)) !== false) {
+                $data = $zip->getFromIndex($index);
+                $zip->close();
+                
+                // Use regular expression to extract text content
+                preg_match_all('/<w:t [^>]*>(.*?)<\/w:t>/', $data, $matches);
+                $text = implode(' ', $matches[1]);
+                $text = str_replace('</w:r></w:p></w:tc><w:tc>', " ", $text);
+                $text = str_replace('</w:r></w:p>', "\r\n", $text);
+                $text = str_replace("<br />", "\n", $text);
+                $text = strip_tags($text);
+                
+                Storage::delete($filePath);
+                
+                return nl2br($text);
             }
+        } else {
+            Storage::delete($filePath);
+            return 0;
         }
-        if (config('constants.native_languge') == $tool->lang) {
-            try {
-                Redis::del('other_tool_native_' . $tool->slug);
-                Redis::hMset('other_tool_native_' . $tool->slug, $tool->toArray());
-            } catch (\Throwable $th) {
+    }    
 
-            }
-        }
-        if (config('constants.native_languge') != $tool->lang) {
-            try {
-                Redis::del('other_lang_tool_' . $tool->lang . "_" . $tool->slug);
-                Redis::hMset('other_lang_tool_' . $tool->lang . "_" . $tool->slug, $tool->toArray());
-            } catch (\Throwable $th) {
-
-            }
-        }
-        $this->tool_canonicals_redis(parent_id: (int) $tool->parent_id);
+    protected function get_text_pdf($filePath)
+    {
+        $parser = new Parser();
+        $parsedText = $parser->parseFile(Storage::path($filePath))->getText();
+        return $parsedText;
     }
 
-    public function delete_tool_redis($tool)
+    protected function readTXTFile($filePath)
     {
-        if ($tool->is_home == 1) {
-            try {
-                Redis::del('home_tool_native');
-            } catch (\Throwable $th) {
-
-            }
-        }
-        if (config('constants.native_languge') == $tool->lang) {
-            try {
-                Redis::del('other_tool_native_' . $tool->slug);
-            } catch (\Throwable $th) {
-
-            }
-        }
-        if (config('constants.native_languge') != $tool->lang) {
-            try {
-                Redis::del('other_lang_tool_' . $tool->lang . "_" . $tool->slug);
-            } catch (\Throwable $th) {
-
-            }
-        }
-        $this->tool_canonicals_redis(parent_id: (int) $tool->parent_id);
+        $text = file_get_contents(Storage::path($filePath));
+        return $text;
     }
-
+    // public function docx_to_txt($filePath)
+    // {
+    //     $zip = new ZipArchive;
+    //     $dataFile = 'word/document.xml';
+    //     if (true === $zip->open(Storage::path($filePath))) {
+    //         if (($index = $zip->locateName($dataFile)) !== false) {
+    //             $data = $zip->getFromIndex($index);
+    //             $zip->close();
+    //             $data = str_replace('</w:r></w:p></w:tc><w:tc>', " ", $data);
+    //             $data = str_replace('</w:r></w:p>', "\r\n", $data);
+    //             $data = strip_tags($data);
+    //             Storage::delete($filePath);
+    //             return $data;
+    //         }
+    //     } else {
+    //         Storage::delete($filePath);
+    //         return 0;
+    //     }
+    // }
+    
+    // public function doc_to_text($path)
+    // {
+    //     $fileHandle = fopen(Storage::path($path), "r");
+    //     $line = @fread($fileHandle, Storage::size($path));
+    //     $lines = explode(chr(0x0D), $line);
+    //     $outtext = "";
+    //     foreach ($lines as $thisline) {
+    //         $pos = strpos($thisline, chr(0x00));
+    //         if (($pos !== false) || (strlen($thisline) == 0)) {
+    //         } else {
+    //             $outtext .= $thisline . " ";
+    //         }
+    //     }
+    //     Storage::delete($path);
+    //     return $outtext = preg_replace("/[^a-zA-Z0-9\s,.-\r\t@/_()]/", "", $outtext);
+    // }
 }

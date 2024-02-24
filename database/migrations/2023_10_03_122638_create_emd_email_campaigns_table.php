@@ -22,10 +22,10 @@ return new class extends Migration
             $table->string('title',50)->nullable();
             $table->date('start_date')->nullable();
             $table->string('user_status',50)->nullable()->comment('user status like Premium,Free,Expired,Refunded etc...');
-            $table->integer('per_hour_emails')->default(0)->comment('no of emails send in 1 hours');
-            $table->tinyInteger('status')->default(0)->comment('0 for stop, 1 for running, 2 for completed');
-            $table->integer('total_emails')->default(0)->comment('total emails for this campaign');
-            $table->integer('send_emails')->default(0)->comment('sended emails for this campaign');
+            $table->integer('per_hour_emails')->nullable()->default(0)->comment('no of emails send in 1 hours');
+            $table->tinyInteger('status')->nullable()->default(0)->comment('0 for stop, 1 for running, 2 for completed');
+            $table->integer('total_emails')->nullable()->default(0)->comment('total emails for this campaign');
+            $table->integer('send_emails')->nullable()->default(0)->comment('sended emails for this campaign');
             $table->string('testing_email',100)->nullable();
             $table->timestamps();
             $table->softDeletes();

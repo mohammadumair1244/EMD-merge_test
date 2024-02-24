@@ -16,7 +16,7 @@
 
         <div class="card">
             <div class="card-body pt-0">
-                <h4 class="my-3">{{ request()->route('file_name') }} Read:</h4>
+                <h4 class="my-3">Laravel Log Read:</h4>
                 <div class="row">
                     <div class="col-md-12">
                         <pre>{{ $log_content }}</pre>

@@ -58,7 +58,7 @@
         @if (isset($tool) || isset($blog))
             <div class="admin-navbar">
                 @if (isset($tool))
-                    <a href="{{ URL('admin/tool/' . $tool->id . '/edit') }}" target="_blank">Edit Tool</a>
+                    <a href="{{ route('tool.edit', ['tool' => $tool]) }}" target="_blank">Edit Tool</a>
                 @endif
                 @if (isset($blog))
                     <a href="{{ URL('admin/blog/' . $blog['id'] . '/edit') }}" target="_blank">Edit Blog</a>

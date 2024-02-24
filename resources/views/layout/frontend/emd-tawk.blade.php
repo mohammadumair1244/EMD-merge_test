@@ -1,7 +1,7 @@
 @production
     @php
-        $emd_tawk_chat_url = config('emd_setting_keys.emd_tawk_chat_url');
-        $emd_chat_status = config('emd_setting_keys.emd_chat_status');
+        $emd_tawk_chat_url = @get_setting_by_key('emd_tawk_chat_url')->value;
+        $emd_chat_status = @get_setting_by_key('emd_chat_status')->value;
     @endphp
     @if ($emd_tawk_chat_url != '' && (int) $emd_chat_status == 1)
         <!--Start of Tawk.to Script-->

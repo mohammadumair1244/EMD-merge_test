@@ -93,14 +93,12 @@ return [
         'Vietnamese' => 'vi',
         'Chinese' => 'zh',
     ],
-    'native_languge' => 'en',
+    'native_languge' => 'es',
     'nofollow_noindex' => $nofollow_noindex,
-    'version' => 'v2.0.9',
-    'commit_no' => 9,
+    'version' => 'v2.0.2',
+    'product_version' => '2.6',
     'emd_google_login_callback' => env('EMD_GOOGLE_CALLBACK_URL', null),
     'emd_google_client_id' => env('EMD_GOOGLE_CLIENT_ID', null),
     'emd_google_client_secret' => env('EMD_GOOGLE_CLIENT_SECRET', null),
     'emd_paypro_dynamic_plan_key' => env('PAYPRO_DYNAMIC_PLAN_KEY', null),
-    // 'user_ip_get' => 'x-forwarded-for', // for AWS Server use this variable
-    'user_ip_get' => 'x-real-ip', // for Cloud ways Server use this variable
 ];

@@ -1,33 +1,5 @@
-<div class="left-side-menu" style="margin-top: -70px;">
-    <a href="{{ route('home') }}" target="_blank" class="logo-box" style="padding-left: 15px;">
-        <div class="logo">
-            <img src="{{ asset('web_assets/admin/images/users/user-1.jpg') }}" alt="">
-        </div>
-        <div class="text">
-            <span class="name">{{ config('app.name') }}</span>
-            <span class="url">{{ route('home') }}</span>
-        </div>
-    </a>
-    <ul class="list-unstyled topnav-menu topnav-menu-left m-0">
-        <li>
-            <button class="button-menu-mobile waves-effect waves-light">
-                <i class="fe-menu"></i>
-            </button>
-        </li>
-
-        <li>
-            <!-- Mobile menu toggle (Horizontal Layout)-->
-            <a class="navbar-toggle nav-link" data-bs-toggle="collapse" data-bs-target="#topnav-menu-content">
-                <div class="lines">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </a>
-            <!-- End mobile menu toggle-->
-        </li>
-    </ul>
-    <div class="h-100" style="padding-bottom: 70px;" data-simplebar>
+<div class="left-side-menu">
+    <div class="h-100" data-simplebar>
         <div id="sidebar-menu">
             <ul id="side-menu">
                 <li>
@@ -107,11 +79,6 @@
                         <ul class="nav-second-level">
                             @can('view_tool')
                                 <li>
-                                    <a href="{{ route('tool.parent_tools') }}">Parent List</a>
-                                </li>
-                            @endcan
-                            @can('view_tool')
-                                <li>
                                     <a href="{{ route('tool.index') }}">List</a>
                                 </li>
                             @endcan
@@ -129,33 +96,6 @@
                     </div>
                     </a>
                 </li>
-                @include('layout.admin.custom.leftBar_1')
-                <li>
-                    <a href="#custom_page" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
-                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
-                        <span>Custom Page</span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="custom_page">
-                        <ul class="nav-second-level">
-                            @can('custom_page_view')
-                                <li>
-                                    <a href="{{ route('custom_page.view_page') }}">List</a>
-                                </li>
-                            @endcan
-                            @can('custom_page_add')
-                                <li>
-                                    <a href="{{ route('custom_page.add_page') }}">Add</a>
-                                </li>
-                            @endcan
-                            @can('custom_page_trash_view')
-                                <li>
-                                    <a href="{{ route('custom_page.trash_page') }}">Trash</a>
-                                </li>
-                            @endcan
-                        </ul>
-                    </div>
-                </li>
                 <li>
                     <a href="#emd-pricing-plan" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
                         <img src="{{ asset('web_assets/admin/images/coding.png') }}" alt="">
@@ -167,9 +107,6 @@
                             @can('view_pricing_plan')
                                 <li>
                                     <a href="{{ route('emd_pricing_plan_view') }}">List</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_pricing_plan_view', ['type' => 1]) }}">Mobile</a>
                                 </li>
                             @elsecan('view_dynamic_pricing_plan')
                                 <li>
@@ -195,6 +132,50 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#media" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
+                        <img src="{{ asset('web_assets/admin/images/gallery.png') }}" alt="">
+                        <span> Media </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="media">
+                        <ul class="nav-second-level">
+                            @can('view_media')
+                                <li>
+                                    <a href="{{ route('media.create') }}">List / Add</a>
+                                </li>
+                            @endcan
+                            @can('view_trash_media')
+                                <li>
+                                    <a href="{{ route('media.trash_list') }}">Trash</a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="#contacts" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
+                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
+                        <span> Contacts </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="contacts">
+                        <ul class="nav-second-level">
+                            @can('view_contact_us')
+                                <li>
+                                    <a href="{{ route('contact.index') }}">List</a>
+                                </li>
+                            @endcan
+                            @can('view_trash_contact_us')
+                                <li>
+                                    <a href="{{ route('dashboard.contacts.trash') }}">Trash</a>
+                                </li>
+                            @endcan
+                        </ul>
+
+                    </div>
+                </li>
+                <li>
                     <a href="#settings" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
                         <img src="{{ asset('web_assets/admin/images/settings.png') }}" alt="">
                         <span> Settings </span>
@@ -209,39 +190,64 @@
                             @endcan
                             @can('view_chat')
                                 <li>
-                                    <a href="{{ route('emd_chat_page') }}">Chat Setting</a>
+                                    <a href="{{ route('emd_chat_page') }}">Chat</a>
                                 </li>
                             @endcan
-                            @if (config('emd_setting_keys.emd_tool_api_route_for_live') != '' &&
-                                    config('emd_setting_keys.emd_tool_api_key_for_live') != '')
+
+                            @if (
+                                @get_setting_by_key('emd_tool_api_route_for_live')->value != '' &&
+                                    @get_setting_by_key('emd_tool_api_key_for_live')->value != '')
                                 @can('get_live_tool')
                                     <li>
-                                        <a href="{{ route('emd_tool_get_page') }}">Live Web Tools</a>
+                                        <a href="{{ route('emd_tool_get_page') }}">EMD Live Tool</a>
                                     </li>
                                 @endcan
                             @endif
                             @can('view_all_permission_list')
                                 <li>
-                                    <a href="{{ route('view_all_permission_page') }}">Permissions</a>
+                                    <a href="{{ route('view_all_permission_page') }}">EMD Permission</a>
                                 </li>
                             @endcan
                             @can('view_microsoft_clarity')
                                 <li>
-                                    <a href="{{ route('clarity.view_page') }}">Clarity Setting</a>
+                                    <a href="{{ route('clarity.view_page') }}">Microsoft Clarity</a>
                                 </li>
                             @endcan
                             @can('view_log_file')
                                 <li>
                                     <a href="{{ route('emd_laravel_log_page') }}">
-                                        Log Files
+                                        Laravel Log File
                                     </a>
                                 </li>
                             @endcan
-                            @can('view_migrate_status')
+                        </ul>
+                    </div>
+                </li>
+                <li>
+                    <a href="#emd_email_setting" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
+                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
+                        <span>Email Setting</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="emd_email_setting">
+                        <ul class="nav-second-level">
+                            @can('view_email_setting')
                                 <li>
-                                    <a href="{{ route('emd_view_migrate_status_page') }}">
-                                        Migrate Status
-                                    </a>
+                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 1]) }}">Contact Us</a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 2]) }}">Forgot
+                                        Password</a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 3]) }}">New Account</a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 4]) }}">Account Delete</a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 5]) }}">Cancel
+                                        Membership</a>
                                 </li>
                             @endcan
                         </ul>
@@ -258,11 +264,6 @@
                             @can('view_users')
                                 <li>
                                     <a href="{{ route('emd_view_web_users') }}">List</a>
-                                </li>
-                            @endcan
-                            @can('view_random_users')
-                                <li>
-                                    <a href="{{ route('emd_view_random_web_users') }}">Random</a>
                                 </li>
                             @endcan
                             @can('view_trash_user')
@@ -299,135 +300,6 @@
                             @can('trash_view_custom_field')
                                 <li>
                                     <a href="{{ route('custom_field.trash_view_page') }}">Trash</a>
-                                </li>
-                            @endcan
-                        </ul>
-                    </div>
-                </li>
-                <li>
-                    <a href="#emd_transaction" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
-                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
-                        <span> Transaction</span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="emd_transaction">
-                        <ul class="nav-second-level">
-                            @can('view_all_transactions')
-                                <li>
-                                    <a
-                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_PROCESSED]) }}">Processed</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_CHARGE_BACK]) }}">Chargeback</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_REFUNDED]) }}">Refunded</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_CANCELED]) }}">Canceled</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_WAITING]) }}">Waiting</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_CHANGE_PLAN]) }}">Change
-                                        Plan</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_transaction_search_page') }}">Search Order</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_transaction_without_original', ['type' => App\Models\EmdUserTransaction::TEST_MODE]) }}">Test</a>
-                                </li>
-                                <li>
-                                    <a
-                                        href="{{ route('emd_transaction_without_original', ['type' => App\Models\EmdUserTransaction::REGISTER_MODE]) }}">Register</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_transaction_logs_page') }}">Trans Logs</a>
-                                </li>
-                            @endcan
-
-                        </ul>
-                    </div>
-                </li>
-                <li>
-                    <a href="#media" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
-                        <img src="{{ asset('web_assets/admin/images/gallery.png') }}" alt="">
-                        <span> Media </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="media">
-                        <ul class="nav-second-level">
-                            @can('view_media')
-                                <li>
-                                    <a href="{{ route('media.create') }}">List / Add</a>
-                                </li>
-                            @endcan
-                            @can('view_trash_media')
-                                <li>
-                                    <a href="{{ route('media.trash_list') }}">Trash</a>
-                                </li>
-                            @endcan
-                        </ul>
-                    </div>
-                    </a>
-                </li>
-                @include('layout.admin.custom.leftBar_2')
-                <li>
-                    <a href="#contacts" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
-                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
-                        <span> Contacts </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="contacts">
-                        <ul class="nav-second-level">
-                            @can('view_contact_us')
-                                <li>
-                                    <a href="{{ route('contact.index') }}">List</a>
-                                </li>
-                            @endcan
-                            @can('view_trash_contact_us')
-                                <li>
-                                    <a href="{{ route('dashboard.contacts.trash') }}">Trash</a>
-                                </li>
-                            @endcan
-                        </ul>
-
-                    </div>
-                </li>
-
-                <li>
-                    <a href="#emd_email_setting" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
-                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
-                        <span>Email Setting</span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="emd_email_setting">
-                        <ul class="nav-second-level">
-                            @can('view_email_setting')
-                                <li>
-                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 1]) }}">Contact Us</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 2]) }}">Forgot
-                                        Password</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 3]) }}">New Account</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 4]) }}">Account Delete</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('emd_email_setting_type_page', ['type' => 5]) }}">Cancel
-                                        Membership</a>
                                 </li>
                             @endcan
                         </ul>
@@ -480,7 +352,51 @@
                         </ul>
                     </div>
                 </li>
+                <li>
+                    <a href="#emd_transaction" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
+                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
+                        <span> Transaction</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="emd_transaction">
+                        <ul class="nav-second-level">
+                            @can('view_all_transactions')
+                                <li>
+                                    <a
+                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_PROCESSED]) }}">Processed</a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_CHARGE_BACK]) }}">Chargeback</a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_REFUNDED]) }}">Refunded</a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_CANCELED]) }}">Canceled</a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_WAITING]) }}">Waiting</a>
+                                </li>
+                                <li>
+                                    <a
+                                        href="{{ route('emd_all_transaction', ['type' => App\Models\EmdUserTransaction::OS_CHANGE_PLAN]) }}">Change
+                                        Plan</a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('emd_transaction_search_page') }}">Search Order</a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('emd_transaction_logs_page') }}">Trans Logs</a>
+                                </li>
+                            @endcan
 
+                        </ul>
+                    </div>
+                </li>
                 <li>
                     <a href="#email_campaign" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
                         <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
@@ -530,6 +446,32 @@
                         </ul>
                     </div>
                 </li>
+                <li>
+                    <a href="#custom_page" data-bs-toggle="collapse" class="collapsed" aria-expanded="false">
+                        <img src="{{ asset('web_assets/admin/images/letter.png') }}" alt="">
+                        <span>Custom Page</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="custom_page">
+                        <ul class="nav-second-level">
+                            @can('custom_page_view')
+                                <li>
+                                    <a href="{{ route('custom_page.view_page') }}">List</a>
+                                </li>
+                            @endcan
+                            @can('custom_page_add')
+                                <li>
+                                    <a href="{{ route('custom_page.add_page') }}">Add</a>
+                                </li>
+                            @endcan
+                            @can('custom_page_trash_view')
+                                <li>
+                                    <a href="{{ route('custom_page.trash_page') }}">Trash</a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </div>
+                </li>
                 @can('view_modals')
                     <li>
                         <a href="{{ route('dashboard.components') }}" class="active">
@@ -538,7 +480,6 @@
                         </a>
                     </li>
                 @endcan
-                @include('layout.admin.custom.leftBar_3')
             </ul>
         </div>
         <!-- End Sidebar -->

@@ -23,24 +23,20 @@ class AdminController extends Controller
     public function dashboard()
     {
         $audits = Tool::with('audits')->get();
-        if (config('emd_setting_keys.emd_dashboard_stats') == 1) {
-            $dashboard_stats = [
-                'total_users_count' => User::count(),
-                'total_web_users_count' => User::where('admin_level', User::WEB_REGISTER)->where('email', '!=', '')->whereNotNull('email')->count(),
-                'total_web_null_users_count' => User::whereNull('email')->orWhere('email', '')->where('admin_level', User::WEB_REGISTER)->count(),
-                'total_admins_count' => User::whereNot('admin_level', User::WEB_REGISTER)->count(),
-                'total_web_premium' => EmdWebUser::where('is_web_premium', EmdWebUser::PREMIUM_USER)->where('is_api_premium', EmdWebUser::FREE_USER)->count(),
-                'total_api_premium' => EmdWebUser::where('is_web_premium', EmdWebUser::FREE_USER)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->count(),
-                'total_web_api_premium' => EmdWebUser::where('is_web_premium', EmdWebUser::PREMIUM_USER)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->count(),
-                'total_feedbacks_count' => EmdFeedback::count(),
-                'total_contacts_count' => Contact::count(),
-                'total_PTrans_count' => EmdUserTransaction::where('order_status', EmdUserTransaction::OS_PROCESSED)->count(),
-                'total_CTrans_count' => EmdUserTransaction::where('order_status', EmdUserTransaction::OS_CANCELED)->count(),
-                'total_RTrans_count' => EmdUserTransaction::where('order_status', EmdUserTransaction::OS_REFUNDED)->count(),
-            ];
-        } else {
-            $dashboard_stats = [];
-        }
+        $dashboard_stats = [
+            'total_users_count' => User::count(),
+            'total_web_users_count' => User::where('admin_level', User::WEB_REGISTER)->where('email', '!=', '')->whereNotNull('email')->count(),
+            'total_web_null_users_count' => User::whereNull('email')->orWhere('email', '')->where('admin_level', User::WEB_REGISTER)->count(),
+            'total_admins_count' => User::whereNot('admin_level', User::WEB_REGISTER)->count(),
+            'total_web_premium' => EmdWebUser::where('is_web_premium', EmdWebUser::PREMIUM_USER)->where('is_api_premium', EmdWebUser::FREE_USER)->count(),
+            'total_api_premium' => EmdWebUser::where('is_web_premium', EmdWebUser::FREE_USER)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->count(),
+            'total_web_api_premium' => EmdWebUser::where('is_web_premium', EmdWebUser::PREMIUM_USER)->where('is_api_premium', EmdWebUser::PREMIUM_USER)->count(),
+            'total_feedbacks_count' => EmdFeedback::count(),
+            'total_contacts_count' => Contact::count(),
+            'total_PTrans_count' => EmdUserTransaction::where('order_status', EmdUserTransaction::OS_PROCESSED)->count(),
+            'total_CTrans_count' => EmdUserTransaction::where('order_status', EmdUserTransaction::OS_CANCELED)->count(),
+            'total_RTrans_count' => EmdUserTransaction::where('order_status', EmdUserTransaction::OS_REFUNDED)->count(),
+        ];
         return view('admin.dashboard')->with(['tools_with_audits' => $audits, 'dashboard_stats' => $dashboard_stats]);
     }
 
@@ -75,25 +71,14 @@ class AdminController extends Controller
         $sectionType = !empty($request->sectionType) ? $request->sectionType : '';
         $contentValue = !empty($request->contentKey) ? $request->contentValue : '';
         $inputType = !empty($request->contentKey) ? $request->inputType : '';
+        $autoload = !empty($request->autoload) ? $request->autoload : '';
         for ($i = 0; $i < count($contentKey); ++$i) {
             Setting::updateOrInsert(
                 ['key' => $contentKey[$i]],
-                ['value' => $contentValue[$i], 'type' => $inputType[$i], 'section' => $sectionType[$i], 'autoload' => 0]
+                ['value' => $contentValue[$i], 'type' => $inputType[$i], 'section' => $sectionType[$i], 'autoload' => $autoload[$i]]
             );
         }
-        $this->create_setting_key_file();
         return back();
-    }
-    public static function create_setting_key_file()
-    {
-        $configData = [];
-        $settings = Setting::select('key', 'value')->where('type', 'inputField')->get();
-        foreach ($settings as $setting_item) {
-            $configData[$setting_item->key] = $setting_item->value;
-        }
-        $configPath = config_path('emd_setting_keys.php');
-        file_put_contents($configPath, '<?php return ' . var_export($configData, true) . ';');
-        return true;
     }
     public function modals()
     {

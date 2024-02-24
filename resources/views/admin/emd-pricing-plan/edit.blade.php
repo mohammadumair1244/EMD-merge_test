@@ -1,9 +1,7 @@
 @extends('admin')
 @section('head')
     <style>
-        .hide_this {
-            display: none;
-        }
+
     </style>
 @endsection
 @section('content')
@@ -97,15 +95,9 @@
                         </div>
                         <div class=" col-md-6 mb-3">
                             <label for="contact" class="form-label">Paypro Product Id</label>
-                            <input class="form-control" id="paypro_product_id" name="paypro_product_id"
-                                value="{{ $emd_pricing_plan->paypro_product_id }}"
-                                placeholder="ex: paypro product id :  80121" required="" />
-                        </div>
-                        <div class=" col-md-6 mb-3">
-                            <label for="contact" class="form-label">Mobile App Product Id (PID)</label>
-                            <input class="form-control" id="mobile_app_product_id" name="mobile_app_product_id"
-                                value="{{ $emd_pricing_plan->mobile_app_product_id }}"
-                                placeholder="ex: mobile app product id :  com.enzipe.package.weekly" />
+                            <input class="form-control" name="paypro_product_id"
+                                value="{{ $emd_pricing_plan->paypro_product_id }}" id="ex: paypro product id :  80121"
+                                required="" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="blog" class="form-label">For API</label>
@@ -129,11 +121,11 @@
                         <div class=" col-md-6 mb-3">
                             <label for="contact" class="form-label">Unique Key</label>
                             <input class="form-control" value="{{ $emd_pricing_plan->unique_key }}" name="unique_key"
-                                placeholder="ex: standard_plan" />
+                                id="ex: standard_plan" required="" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="blog" class="form-label">Custom</label>
-                            <select class="form-select" id="custom_type_change" name="is_custom">
+                            <select class="form-select" id="" name="is_custom">
                                 <option value="{{ App\Models\EmdPricingPlan::SIMPLE_PLAN }}">
                                     {{ App\Models\EmdPricingPlan::CUSTOM_TYPE[0] }}</option>
                                 @can('add_custom_pricing_plan')
@@ -151,23 +143,6 @@
                                     {{ App\Models\EmdPricingPlan::CUSTOM_TYPE[4] }}</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="blog" class="form-label">Only Mobile Plan</label>
-                            <select class="form-select" id="is_mobile" name="is_mobile">
-                                @foreach (App\Models\EmdPricingPlan::MOBILE_OR_WEB as $key => $val)
-                                    <option value="{{ $key }}" {{ $emd_pricing_plan->is_mobile == $key ? 'selected' : '' }}>
-                                        {{ $key == 0 ? 'No' : 'Yes' }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="paypro_key hide_this">
-                                <b>Key: </b>
-                                {{ substr(md5(config('constants.emd_paypro_dynamic_plan_key') . '-key'), 0, 32) }}<br>
-                                <b>IV: </b>
-                                {{ substr(md5(config('constants.emd_paypro_dynamic_plan_key') . '-iv'), 0, 16) }}
-                            </div>
-                        </div>
                     </div>
                     <div style="text-align: right">
                         @can('edit_pricing_plan')
@@ -182,29 +157,4 @@
     </div>
 @endsection
 @section('script')
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $("#custom_type_change").change(function() {
-                var type = parseInt($(this).val());
-                if (type == 2) {
-                    $(".paypro_key").removeClass("hide_this");
-                }
-            });
-            mobile_or_web_plan();
-            $("#is_mobile").change(function() {
-                mobile_or_web_plan();
-            });
-
-            function mobile_or_web_plan() {
-                var type = parseInt($("#is_mobile").val());
-                if (type == 0) {
-                    $("#paypro_product_id").attr("required", true);
-                    $("#mobile_app_product_id").removeAttr("required");
-                } else {
-                    $("#paypro_product_id").removeAttr("required");
-                    $("#mobile_app_product_id").attr("required", true);
-                }
-            }
-        });
-    </script>
 @endsection

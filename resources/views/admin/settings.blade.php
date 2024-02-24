@@ -45,8 +45,7 @@
                                     class="form-label">{{ Str::ucfirst(str_replace('_', ' ', $item->key)) }}</label>
                                 <input type="text" name="{{ $item->key }}" class="form-control"
                                     value="{{ $item->value }}"
-                                    placeholder="{{ Str::ucfirst(str_replace('_', ' ', $item->key)) }}" readonly=""
-                                    required>
+                                    placeholder="{{ Str::ucfirst(str_replace('_', ' ', $item->key)) }}" readonly="" required>
                             </div>
                         @endforeach
                     </div>
@@ -60,7 +59,7 @@
                                     <input type="text" name="contentKey[]" class="form-control" placeholder="Key"
                                         value="{{ $item->key }}" required>
                                 </div>
-                                <div class="col-md-9 mb-3">
+                                <div class="col-md-8 mb-3">
                                     @if ($item->type == 'inputField')
                                         <input type="text" name="contentValue[]" class="form-control" placeholder="Value"
                                             value="{{ $item->value }}">
@@ -70,7 +69,16 @@
                                         <input type="text" class="form-control tool_textarea"
                                             value="{{ $item->value }}" name="contentValue[]" />
                                     @endif
-                                    <span style="margin-left: 15px;">{{ config('emd_setting_keys.' . $item->key) }}</span>
+                                </div>
+                                <div class="col-md-1 mb-3">
+                                    <div class="form-group">
+                                        <select class="form-control" name="autoload[]">
+                                            <option value="0" selected>No</option>
+                                            <option value="1" {{ intval($item->autoload) ? 'selected' : '' }}>
+                                                Yes
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                                 @can('delete_setting')
                                     <a class="cross" data-id="{{ $item->id }}">&times;</a>
@@ -108,13 +116,11 @@
 @endsection
 @section('script')
     {{-- TINYMCE SCRIPT --}}
-    {{-- <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js" referrerpolicy="origin"></script> --}}
+    <script defer src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <script defer src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js" referrerpolicy="origin">
+    </script>
     {{-- TINYMCE SCRIPT END --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"
-        integrity="sha512-6JR4bbn8rCKvrkdoTJd/VFyXAN4CE9XMtgykPWgKiHjou56YDJxWsi90hAeMTYxNwUnKSQu9JPc3SQUg+aGCHw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="{{ asset('web_assets/admin/js/tinymce-script-2.js?v1.0.3') }}"></script>
+    <script src="{{ asset('web_assets/admin/js/tinymce-script.js?v1.0.2') }}"></script>
     <script>
         $(document).ready(function() {
 
@@ -172,6 +178,14 @@
             } else {
                 html += `<input class="form-control tool_textarea" name="contentValue[]"   />`;
             }
+            html += `</div><div class="col-md-1 mb-3">
+                <div class="form-group">
+                                            <select class="form-control" name="autoload[]">
+                                                <option value="1">Yes</option>
+                                                <option value="0" selected>No</option>
+                                            </select>
+                                        </div>
+                                </div></div>`;
             $(".tool_content").append(html);
             init_tinymce();
         });

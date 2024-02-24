@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ToolController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,5 +19,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-require __DIR__ . '/emd_mobile_api.php';
-require __DIR__ . '/emd_api.php';
+Route::middleware('emd_tool_api')->group(function () {
+    Route::post('get-tools-list', [ToolController::class, 'get_tools_list_for_api']);
+});

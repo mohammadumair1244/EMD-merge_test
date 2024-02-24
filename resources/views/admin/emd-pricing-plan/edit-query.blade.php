@@ -12,7 +12,7 @@
         <div class="col-12 mt-4">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="header-title">Edit Query Limit</h4>
+                    <h4 class="header-title">Add Query Limit</h4>
                     <form
                         action="{{ route('emd_update_pricing_plan_allow', ['plan_id' => request()->route('plan_id'), 'id' => request()->route('id')]) }}"
                         method="POST">

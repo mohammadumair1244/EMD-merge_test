@@ -8,9 +8,6 @@ return [
     'query_not_avail_set_free_mode' => 'query not available && now free mode',
     'not_premium_user' => 'not premium user',
     'free_user' => 'free user',
-    'query_limit_is_less_for_this_tool' => 'query limit is less for this tool',
-    'remaining_query_detected' => 'remaining query detected of single row',
-    'remaining_query_detected_for_this_tool' => 'remaining query detected for this tool',
 
     'reset_pass_token_required' => 'token required',
     "reset_pass_done" => "Password has been reset successfully",

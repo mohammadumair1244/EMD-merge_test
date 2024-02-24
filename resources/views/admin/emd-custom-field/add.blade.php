@@ -109,7 +109,7 @@
                         </div>
                     </div>
                     <div style="text-align: right">
-                        @can('add_custom_field')
+                        @can('custom_page_add')
                             <button type="submit" class="btn btn-primary waves-effect waves-light">
                                 Submit
                             </button>

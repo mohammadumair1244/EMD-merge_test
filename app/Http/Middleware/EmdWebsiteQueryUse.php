@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Repositories\EmdWebUserRepository;
 use Closure;
 use Illuminate\Http\Request;
+use App\Repositories\EmdWebUserRepository;
 
 class EmdWebsiteQueryUse
 {
@@ -17,15 +17,7 @@ class EmdWebsiteQueryUse
      */
     public function handle(Request $request, Closure $next)
     {
-        $tool_key = null;
-        if ($request->filled('tool_key')) {
-            $tool_key = @$request?->tool_key ?? 'none';
-        }
-        $p_tool_id = null;
-        if ($request->filled('p_tool_id')) {
-            $p_tool_id = @$request?->p_tool_id ?? 0;
-        }
-        $query_available = EmdWebUserRepository::EmdWebsiteQueryUse(error_mess: true, tool_key: $tool_key, tool_id: $p_tool_id);
+        $query_available = EmdWebUserRepository::EmdWebsiteQueryUse(error_mess: true);
         if (!$query_available[0]) {
             return response()->json(['emd_middleware_mess' => $query_available[1]]);
         }

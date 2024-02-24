@@ -47,7 +47,7 @@ class EmdPricingPlanAllowController extends Controller
     public function update_pricing_plan_allow(Request $request, $plan_id, $id)
     {
         $this->authorize('edit_pricing_plan');
-        $result = $this->emd_pricing_plan_allow_interface->update_pricing_plan_allow($request, $plan_id, $id);
-        return redirect()->route('emd_view_and_add_pricing_plan_allow', ['plan_id' => $plan_id])->with('error', $result ? 'Successfully Updated' : 'Custom Field Required');
+        $this->emd_pricing_plan_allow_interface->update_pricing_plan_allow($request, $plan_id, $id);
+        return redirect()->route('emd_view_and_add_pricing_plan_allow', ['plan_id' => $plan_id])->with('error', 'Successfully Updated');
     }
 }

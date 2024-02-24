@@ -19,12 +19,12 @@
         <div class="col-12 mt-4">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="header-title">All Tools</h4>
+                    <h4 class="header-title">Tool Data Table</h4>
                     <table id="tools_table" class="table dt-responsive nowrap w-100">
                         <thead>
                             <tr>
                                 <th>Sr.</th>
-                                <th>Tool Name / Slug</th>
+                                <th>Tool Name</th>
                                 <th>Parent</th>
                                 <th>Language</th>
                                 <th>Trash</th>
@@ -42,8 +42,6 @@
                                         @else
                                             {{ $item->name }}
                                         @endcan
-                                        <br>
-                                        <b>{{ $item->slug }}</b>
                                     </td>
                                     <td>{{ @$item->parent->name }}</td>
                                     <td>

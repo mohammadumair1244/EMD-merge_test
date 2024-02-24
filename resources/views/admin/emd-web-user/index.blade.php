@@ -66,12 +66,8 @@
                                         @endcan
                                     </td>
                                     <td>{{ @$item->register_from }}</td>
-                                    <td><a
-                                            href="{{ route('emd_view_web_users_type_wise', ['type' => @$item->is_web_premium ?? 0]) }}">{{ App\Models\EmdWebUser::PREMIUM_TYPE[@$item->is_web_premium] }}</a>
-                                    </td>
-                                    <td><a
-                                            href="{{ route('emd_view_web_users_type_wise', ['type' => @$item->is_api_premium ?? 0]) }}">{{ App\Models\EmdWebUser::PREMIUM_TYPE[@$item->is_api_premium] }}</a>
-                                    </td>
+                                    <td>{{ App\Models\EmdWebUser::PREMIUM_TYPE[@$item->is_web_premium] }}</td>
+                                    <td>{{ App\Models\EmdWebUser::PREMIUM_TYPE[@$item->is_api_premium] }}</td>
                                     <td>
                                         @can('login_user_as')
                                             <a class="btn btn-primary"

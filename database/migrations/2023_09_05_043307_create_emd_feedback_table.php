@@ -15,12 +15,12 @@ return new class extends Migration
     {
         Schema::create('emd_feedback', function (Blueprint $table) {
             $table->id();
-            $table->integer("user_id")->default(0);
-            $table->integer("tool_id")->default(0);
+            $table->integer("user_id")->nullable()->default(0);
+            $table->integer("tool_id")->nullable()->default(0);
             $table->string("name",50)->nullable();
             $table->string("email",200)->nullable();
             $table->string("message",1000)->nullable();
-            $table->tinyInteger("rating")->default(0);
+            $table->tinyInteger("rating")->nullable()->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

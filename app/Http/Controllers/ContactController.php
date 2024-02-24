@@ -19,7 +19,7 @@ class ContactController extends Controller
     public function index()
     {
         $this->authorize('view_contact_us');
-        $contacts = Contact::with('user', 'user.emd_web_user')->orderBy("id", "DESC")->get();
+        $contacts = Contact::with('user', 'user.emd_web_user')->get();
         return view('admin.contacts.index')->with([
             'contacts' => $contacts,
         ]);
@@ -50,7 +50,7 @@ class ContactController extends Controller
         ]);
         $data = [];
         try {
-            $response = Http::get('http://ip-api.com/json/' . @$request->header()[config('constants.user_ip_get')][0] ?? '127.0.0.1');
+            $response = Http::get('http://ip-api.com/json/' . @$request->header()['x-real-ip'][0] ?: '127.0.0.1');
             $result = $response->collect()->only(['query', 'country', 'city', 'org'])->toJson();
             $data['country'] = json_decode($result)->country;
             $data['query'] = json_decode($result)->query;
@@ -58,11 +58,11 @@ class ContactController extends Controller
             $data['org'] = json_decode($result)->org;
         } catch (\Throwable $th) {
             $data['country'] = 'none';
-            $data['query'] = @$request->header()[config('constants.user_ip_get')][0] ?? '127.0.0.1';
+            $data['query'] = @$request->header()['x-real-ip'][0] ?: '127.0.0.1';
             $data['city'] = 'none';
             $data['org'] = 'none';
         }
-        $detail_res = json_decode(json_encode($data));
+        $detail_res= json_decode(json_encode($data));
         $html_body = "<ul>";
         $html_body .= "<li>" . @$detail_res?->country . "</li>";
         $html_body .= "<li>" . @$detail_res?->city . "</li>";

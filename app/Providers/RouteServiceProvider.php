@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\EmdCustomField;
 use App\Models\Tool;
 use App\Repositories\EmdUserTransactionRepository;
 use App\Repositories\EmdWebUserRepository;
@@ -67,10 +68,11 @@ class RouteServiceProvider extends ServiceProvider
         Cache::forget('throttle:toolNew');
         Cache::forget('throttle:tool');
         RateLimiter::for('toolNew', function (Request $request) {
-            if (config('emd_setting_keys.emd_throttle_tool_limit')) {
-                $limit = (int) config('emd_setting_keys.emd_throttle_tool_limit');
-            } else {
+            $default_throttle_tool_limit = EmdCustomField::where('key', 'throttle_tool_limit')->first();
+            if ($default_throttle_tool_limit == null) {
                 $limit = 10;
+            } else {
+                $limit = (int) $default_throttle_tool_limit->default_val;
             }
             if ($request->filled('parent_id')) {
                 $parent_id = (int) $request->input('parent_id');
@@ -82,7 +84,7 @@ class RouteServiceProvider extends ServiceProvider
                 }
             }
             if (EmdWebUserRepository::EmdIsUserPremium()) {
-                if ($request->filled('parent_id')) {
+                if ($request->input('parent_id')) {
                     $parent_tool_id = $request->input('parent_id');
                 } else {
                     $parent_tool_id = 0;

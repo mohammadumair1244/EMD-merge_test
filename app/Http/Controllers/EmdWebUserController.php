@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Interfaces\EmdWebUserInterface;
-use App\Models\EmdWebUser;
 use App\Repositories\EmdEmailCampaignRepository;
 use App\Repositories\EmdWebUserRepository;
 use Illuminate\Http\Request;
@@ -14,7 +13,6 @@ use Laravel\Socialite\Facades\Socialite;
 
 class EmdWebUserController extends Controller
 {
-    public static $is_user_premium = null;
     public function __construct(protected EmdWebUserInterface $emd_web_user_interface)
     {
     }
@@ -23,20 +21,6 @@ class EmdWebUserController extends Controller
         $this->authorize('view_users');
         return view('admin.emd-web-user.index')->with([
             'emd_web_users' => $this->emd_web_user_interface->view_web_users(),
-        ]);
-    }
-    public function view_web_users_random_register()
-    {
-        $this->authorize('view_random_users');
-        return view('admin.emd-web-user.random')->with([
-            'emd_web_users' => $this->emd_web_user_interface->view_web_users_random_register(),
-        ]);
-    }
-    public function view_web_users_type_wise($type = 0)
-    {
-        $this->authorize('view_users');
-        return view('admin.emd-web-user.type_wise')->with([
-            'emd_web_users' => $this->emd_web_user_interface->view_web_users_type_wise($type),
         ]);
     }
     public function view_web_user_detail($id)
@@ -147,14 +131,11 @@ class EmdWebUserController extends Controller
     }
 
     // for emd website function
-    public static function EmdIsUserPremium(bool $web = false, bool $api = false, ?string $api_key = null): int
+    public static function EmdIsUserPremium($web = 0, $api = 0, $api_key = null): int
     {
         return EmdWebUserRepository::EmdIsUserPremium($web, $api, $api_key);
     }
-    public static function EmdAvailableQuery(bool $api = false, bool $both_web_api = false, bool $separate = false, ?string $api_key = null): int | array
-    {
-        return EmdWebUserRepository::EmdAvailableQuery(api: $api, both_web_api: $both_web_api, separate: $separate, api_key: $api_key);
-    }
+
     public static function EmdWebsiteQueryUse($tool_id = null, $query_no = 1, $api_key = null, $error_mess = false, $query_use = true): bool | array
     {
         return EmdWebUserRepository::EmdWebsiteQueryUse($tool_id, $query_no, $api_key, $error_mess, $query_use);
@@ -167,7 +148,7 @@ class EmdWebUserController extends Controller
 
     public function emd_callback_from_google(Request $request)
     {
-        $response_check = $this->emd_web_user_interface->emd_callback_from_google($request, @$request->header()[config('constants.user_ip_get')][0] ?? '127.0.0.1');
+        $response_check = $this->emd_web_user_interface->emd_callback_from_google($request, @$request->header()['x-real-ip'][0] ?: '127.0.0.1');
         if ($response_check) {
             return redirect()->route('home');
         } else {
@@ -205,7 +186,7 @@ class EmdWebUserController extends Controller
             'email' => 'required|email',
             'password' => 'required|min:8',
         ]);
-        $register = $this->emd_web_user_interface->emd_register_with_web($request, @$request->header()[config('constants.user_ip_get')][0] ?? '127.0.0.1', EmdWebUser::REGISTER_FROM_WEB);
+        $register = $this->emd_web_user_interface->emd_register_with_web($request, @$request->header()['x-real-ip'][0] ?: '127.0.0.1');
         if (!$register[0]) {
             return response()->json(['status' => false, 'mess' => $register[1]]);
         } else {
@@ -242,7 +223,7 @@ class EmdWebUserController extends Controller
             'email' => 'required|email',
             'password' => 'required|min:8',
         ]);
-        $login = $this->emd_web_user_interface->emd_login_with_web($request, @$request->header()[config('constants.user_ip_get')][0] ?? '127.0.0.1', EmdWebUser::REGISTER_FROM_WEB);
+        $login = $this->emd_web_user_interface->emd_login_with_web($request);
         if (!$login[0]) {
             return response()->json(['status' => false, 'mess' => $login[1]]);
         } else {

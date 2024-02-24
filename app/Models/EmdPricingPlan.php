@@ -12,7 +12,6 @@ class EmdPricingPlan extends Model implements Auditable
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
     protected $fillable = [
-        'user_id',
         'name',
         'label',
         'short_detail',
@@ -25,11 +24,9 @@ class EmdPricingPlan extends Model implements Auditable
         'duration_type',
         'coupan_paypro',
         'paypro_product_id',
-        'mobile_app_product_id',
         'is_api',
         'is_popular',
         'is_custom',
-        'is_mobile',
         'ordering_no',
         'unique_key',
     ];
@@ -46,7 +43,6 @@ class EmdPricingPlan extends Model implements Auditable
     public const DYNAMIC_PLAN = 2;
     public const USER_CREATED_PLAN = 3;
     public const REGISTERED_PLAN = 4;
-    public const MOBILE_OR_WEB = ['Web', 'Mobile'];
 
     public function emd_pricing_plan_allows()
     {
@@ -59,17 +55,5 @@ class EmdPricingPlan extends Model implements Auditable
     public function scopeActive($query)
     {
         return $query->where('is_active', 1);
-    }
-    public function scopeMobile($query)
-    {
-        return $query->where('is_mobile', 1);
-    }
-    public function scopeWebsite($query)
-    {
-        return $query->where('is_mobile', 0);
-    }
-    public function emd_user_transactions()
-    {
-        return $this->hasMany(EmdUserTransaction::class);
     }
 }

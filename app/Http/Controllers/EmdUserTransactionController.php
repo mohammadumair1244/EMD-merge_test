@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Interfaces\EmdUserTransactionInterface;
 use App\Models\EmdTransactionLog;
-use App\Repositories\EmdUserTransactionRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -100,16 +99,5 @@ class EmdUserTransactionController extends Controller
         $this->authorize('change_user_plan');
         $this->emd_user_transaction_interface->emd_user_plan_change($request, $user_id);
         return back()->with('error', "Successfully Plan Change");
-    }
-    public static function EmdPayproDynamicPlanLink(float $price = 5, float $discount_per = 0, string $currency = 'USD', string $plan_title = null, string $plan_desc = null, int $web_api = 0, int $days = 7, array $plan_availabilities = [['tool_id' => 0, 'queries_limit' => 100, 'allow_json' => ['modes' => 3, 'words_limit' => 50]]]): array
-    {
-        return EmdUserTransactionRepository::EmdPayproDynamicPlanLink(price: $price, discount_per: $discount_per, currency: $currency, plan_title: $plan_title, plan_desc: $plan_desc, web_api: $web_api, days: $days, plan_availabilities: $plan_availabilities);
-    }
-    public function emd_transaction_without_original($type)
-    {
-        $this->authorize('view_all_transactions');
-        return view('admin.emd-transaction.test')->with([
-            'emd_transactions_test_register' => $this->emd_user_transaction_interface->emd_transaction_without_original($type),
-        ]);
     }
 }

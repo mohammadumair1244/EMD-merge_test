@@ -2,38 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Dev\CustomArrayController;
 use App\Models\EmdCustomPage;
 use App\Repositories\EmdCustomFieldRepository;
 use App\Repositories\EmdMicrosoftClarityRepository;
+use App\Repositories\EmdPricingPlanRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 class EmdCustomPageDisplayController extends Controller
 {
-    public static $custom_array__custom_page_static = [];
+    protected $custom_array = [];
     public function custom_page_display(Request $request)
     {
-        $custom_page = EmdCustomPage::where("page_key", implode('-', request()->segments()) ?: '')->first();
+        $custom_page = EmdCustomPage::where("page_key", request()->segments() ?: '')->first();
         if (!$custom_page) {
             abort(404);
         }
-        self::$custom_array__custom_page_static = [];
-        CustomArrayController::custom_array_function_custom_pages(request: $request, ip: @$request->header()[config('constants.user_ip_get')][0] ?? '127.0.0.1');
+        $this->custom_array = [];
+        
+        if (Route::currentRouteNamed('EmdCustomPage.testing')) {
+            $this->pricing_plan(@$request->header()['x-real-ip'][0] ?: '127.0.0.1');
+        }
+
         $allow_json = [];
         foreach (EmdCustomFieldRepository::custom_page_wise_filter($custom_page->id) as $custom_field) {
             $allow_json[$custom_field->key] = $custom_field->default_val;
         }
 
         $clarity_check = [];
-        $clarity_check['display'] = false;
-        $clarity_check['percent'] = 0;
-        if ((config('emd_setting_keys.emd_microsoft_clarity_key') ?? '') != "") {
-            $get_clarity = EmdMicrosoftClarityRepository::clarity_get(emd_custom_page_id: (int) $custom_page->id);
-            if ($get_clarity) {
-                $clarity_check['display'] = true;
-                $clarity_check['percent'] = $get_clarity;
-                // $clarity_check['percent'] = $get_clarity->show_percentage;
-            }
+        $get_clarity = EmdMicrosoftClarityRepository::clarity_get(emd_custom_page_id: (int) $custom_page->id);
+        if ($get_clarity) {
+            $clarity_check['display'] = true;
+            $clarity_check['percent'] = $get_clarity->show_percentage;
+        } else {
+            $clarity_check['display'] = false;
+            $clarity_check['percent'] = 0;
         }
 
         return view("layout.frontend.pages.emd-custom-pages." . $custom_page->blade_file)->with([
@@ -41,9 +44,14 @@ class EmdCustomPageDisplayController extends Controller
             'content' => json_decode($custom_page->content),
             'meta_title' => $custom_page->meta_title,
             'meta_description' => $custom_page->meta_description,
-            'custom_array' => self::$custom_array__custom_page_static,
+            'custom_array' => $this->custom_array,
             'allow_json' => json_decode(json_encode($allow_json)),
             'clarity_check' => json_decode(json_encode($clarity_check)),
         ]);
+    }
+
+    public function pricing_plan($ip)
+    {
+        $this->custom_array['emd_our_pricing_plans'] = EmdPricingPlanRepository::emd_our_pricing_plans_static(ip: $ip);
     }
 }

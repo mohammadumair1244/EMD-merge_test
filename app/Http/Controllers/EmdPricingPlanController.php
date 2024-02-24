@@ -11,10 +11,10 @@ class EmdPricingPlanController extends Controller
     public function __construct(protected EmdPricingPlanInterface $emd_pricing_plan_interface)
     {
     }
-    public function view_pricing_plan($type = 0)
+    public function view_pricing_plan()
     {
         $this->authorize('view_pricing_plan');
-        $emd_pricing_plans = $this->emd_pricing_plan_interface->view_pricing_plan($type);
+        $emd_pricing_plans = $this->emd_pricing_plan_interface->view_pricing_plan();
         return view('admin.emd-pricing-plan.index')->with([
             'web_pricing_plans' => $emd_pricing_plans->whereIn('is_custom', [EmdPricingPlan::SIMPLE_PLAN, EmdPricingPlan::REGISTERED_PLAN]),
             'custom_pricing_plans' => $emd_pricing_plans->where('is_custom', EmdPricingPlan::CUSTOM_PLAN),
@@ -83,5 +83,15 @@ class EmdPricingPlanController extends Controller
         $this->authorize('edit_pricing_plan');
         $this->emd_pricing_plan_interface->emd_pricing_plan_show_hide($id, $is_active);
         return back();
+    }
+
+    // for emd website
+    public function emd_our_pricing_plans(Request $request)
+    {
+        return $this->emd_pricing_plan_interface->emd_our_pricing_plans(@$request->header()['x-real-ip'][0] ?: '127.0.0.1');
+    }
+    public function emd_our_custom_pricing_plans(Request $request)
+    {
+        return $this->emd_pricing_plan_interface->emd_our_custom_pricing_plans($request);
     }
 }

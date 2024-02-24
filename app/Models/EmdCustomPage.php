@@ -20,8 +20,4 @@ class EmdCustomPage extends Model implements Auditable
         'meta_title',
         'meta_description',
     ];
-    public function scopeSitemap($query)
-    {
-        return $query->where('sitemap', 1);
-    }
 }

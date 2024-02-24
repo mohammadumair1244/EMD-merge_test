@@ -1,6 +1,6 @@
 @production
     @php
-        $emd_microsoft_clarity_key = config('emd_setting_keys.emd_microsoft_clarity_key');
+        $emd_microsoft_clarity_key = @get_setting_by_key('emd_microsoft_clarity_key')->value;
     @endphp
     @if (@$clarity_check)
         @if ($clarity_check->display && $emd_microsoft_clarity_key != '' && mt_rand(1, 100) <= $clarity_check->percent)

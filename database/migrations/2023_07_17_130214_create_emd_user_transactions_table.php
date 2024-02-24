@@ -29,7 +29,7 @@ return new class extends Migration
             $table->date("expiry_date")->nullable();
             $table->tinyInteger("is_refund")->nullable()->comment("0 for continue, 1 for refund, 2 for complete use or expired");
             $table->string("renewal_type", 20)->nullable()->comment("ex: Manual, Auto");
-            $table->tinyInteger("is_test_mode")->nullable()->comment("0 for original, 1 for test, 2 for register");
+            $table->tinyInteger("is_test_mode")->nullable();
             $table->longText("all_json_transaction")->nullable();
             $table->timestamps();
             $table->softDeletes();

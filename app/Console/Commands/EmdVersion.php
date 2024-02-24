@@ -27,9 +27,7 @@ class EmdVersion extends Command
      */
     public function handle()
     {
-        dump("EMD Model V3");
-        dump("Version (" . config("constants.version") . ")");
-        dump("Commit No (" . config("constants.commit_no") . ")");
+        dump("EMD V3 (" . config("constants.version") . ")");
         return Command::SUCCESS;
     }
 }

@@ -89,13 +89,8 @@
                         </div>
                         <div class=" col-md-6 mb-3">
                             <label for="contact" class="form-label">Paypro Product Id</label>
-                            <input class="form-control" id="paypro_product_id" name="paypro_product_id"
-                                placeholder="ex: paypro product id :  80121" required="" />
-                        </div>
-                        <div class=" col-md-6 mb-3">
-                            <label for="contact" class="form-label">Mobile App Product Id (PID)</label>
-                            <input class="form-control" id="mobile_app_product_id" name="mobile_app_product_id"
-                                placeholder="ex: mobile app product id :  com.enzipe.package.weekly" />
+                            <input class="form-control" name="paypro_product_id" id="ex: paypro product id :  80121"
+                                required="" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="blog" class="form-label">For (Web or API)</label>
@@ -114,11 +109,11 @@
                         </div>
                         <div class=" col-md-6 mb-3">
                             <label for="contact" class="form-label">Unique Key</label>
-                            <input class="form-control" name="unique_key" placeholder="ex: standard_plan" />
+                            <input class="form-control" name="unique_key" id="ex: standard_plan" required="" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="blog" class="form-label">Category</label>
-                            <select class="form-select" id="custom_type_change" name="is_custom">
+                            <select class="form-select custom_type_change" id="" name="is_custom">
                                 <option value="{{ App\Models\EmdPricingPlan::SIMPLE_PLAN }}">
                                     {{ App\Models\EmdPricingPlan::CUSTOM_TYPE[0] }}</option>
                                 @can('add_custom_pricing_plan')
@@ -131,14 +126,6 @@
                                 @endcan
                                 <option value="{{ App\Models\EmdPricingPlan::REGISTERED_PLAN }}">
                                     {{ App\Models\EmdPricingPlan::CUSTOM_TYPE[4] }}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="blog" class="form-label">Only Mobile Plan</label>
-                            <select class="form-select" id="is_mobile" name="is_mobile">
-                                @foreach (App\Models\EmdPricingPlan::MOBILE_OR_WEB as $key => $val)
-                                    <option value="{{ $key }}">{{ $key == 0 ? 'No' : 'Yes' }}</option>
-                                @endforeach
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -165,20 +152,10 @@
 @section('script')
     <script type="text/javascript">
         $(document).ready(function() {
-            $("#custom_type_change").change(function() {
+            $(".custom_type_change").change(function() {
                 var type = parseInt($(this).val());
                 if (type == 2) {
                     $(".paypro_key").removeClass("hide_this");
-                }
-            });
-            $("#is_mobile").change(function() {
-                var type = parseInt($(this).val());
-                if (type == 0) {
-                    $("#paypro_product_id").attr("required", true);
-                    $("#mobile_app_product_id").removeAttr("required");
-                } else {
-                    $("#paypro_product_id").removeAttr("required");
-                    $("#mobile_app_product_id").attr("required", true);
                 }
             });
         });

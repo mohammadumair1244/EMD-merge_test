@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EmdComponentController;
 use App\Http\Controllers\EmdFeedbackController;
+use App\Http\Controllers\EmdPricingPlanController;
 use App\Http\Controllers\EmdUserTransactionController;
 use App\Http\Controllers\EmdWebUserController;
 use App\Http\Controllers\FrontendController;
@@ -43,14 +44,15 @@ Route::middleware(['emd_is_user_premium', 'emd_allow_post_method'])->group(funct
     });
     Route::get('emd-verify-account/{token}', [EmdWebUserController::class, 'emd_verify_user_account']); // you can change route slug
     Route::post('emd-paypro-callback', [EmdUserTransactionController::class, 'emd_paypro_callback']); // you can change route slug if already used paypro callback
+    Route::get('emd-pricing-plan', [EmdPricingPlanController::class, 'emd_our_pricing_plans'])->name('emd_pricing_plans'); // you can change route slug and don't change route name
+    Route::get('emd-custom-pricing-plan', [EmdPricingPlanController::class, 'emd_our_custom_pricing_plans'])->name('emd_our_custom_pricing_plans'); // you can change route slug and don't change route name
     Route::post('emd-get-component', [EmdComponentController::class, 'get_component'])->name('emd_get_component'); // you can change route slug and don't change route name
-
+    
     Route::get('artisan', function () {
         Artisan::call('optimize:clear');
     });
     require __DIR__ . '/redirection.php';
     require __DIR__ . '/custom.php';
-    require __DIR__ . '/custom_pages.php';
 
     Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:2,1440')->name('store_contact');
     Route::controller(FrontendController::class)->group(function () {

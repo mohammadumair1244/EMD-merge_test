@@ -17,8 +17,8 @@ class EmdAllowPostMethodMiddleware
     public function handle(Request $request, Closure $next)
     {
         if ($request->isMethod('POST')) {
-            if (config('emd_setting_keys.emd_website_request_allow') != "1") {
-                return response()->json(['request' => false, 'message' => config('emd_setting_keys.emd_website_request_allow_mess') ?? "POST Request not allowed"]);
+            if (@get_setting_by_key("emd_website_request_allow")->value != "1") {
+                return response()->json(['request' => false, 'message' => @get_setting_by_key("emd_website_request_allow_mess")->value]);
             }
         }
         return $next($request);

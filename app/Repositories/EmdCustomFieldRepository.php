@@ -6,7 +6,6 @@ use App\Models\EmdCustomField;
 use App\Models\EmdCustomPage;
 use App\Models\Tool;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Redis;
 
 class EmdCustomFieldRepository implements EmdCustomFieldInterface
 {
@@ -54,19 +53,16 @@ class EmdCustomFieldRepository implements EmdCustomFieldInterface
             }
         }
         $this->emd_custom_field_model->create($request->except(['_token', 'field_type', 'tool_or_custom_page']));
-        $this->delete_custom_field_tools_redis(tool_id: $request['tool_id']);
         return true;
     }
     public function delete_link($id): bool
     {
         $this->emd_custom_field_model->destroy($id);
-        $this->delete_custom_field_tools_redis(tool_id: 0);
         return true;
     }
     public function restore_link($id): bool
     {
         $this->emd_custom_field_model->withTrashed()->find($id)->restore();
-        $this->delete_custom_field_tools_redis(tool_id: 0);
         return true;
     }
     public function trash_view_page(): EmdCustomField | Collection
@@ -109,14 +105,13 @@ class EmdCustomFieldRepository implements EmdCustomFieldInterface
             }
         }
         $this->emd_custom_field_model->where('id', $id)->update($request->except(['_token', 'field_type', 'tool_or_custom_page']));
-        $this->delete_custom_field_tools_redis(tool_id: $request['tool_id']);
         return true;
     }
     public function get_key_tool_filter($request): EmdCustomField | Collection
     {
         return $this->tool_wise_filter($request['tool_id']);
     }
-    public static function tool_wise_filter(int $tool_id): EmdCustomField | Collection
+    public static function tool_wise_filter($tool_id): EmdCustomField | Collection
     {
         $tool_key_filter = EmdCustomField::orWhere('is_all_pages', 1)->orWhere('is_tool_pages', 1);
         if ((int) $tool_id == 0) {
@@ -137,31 +132,5 @@ class EmdCustomFieldRepository implements EmdCustomFieldInterface
         }
         $tool_key_filter = $tool_key_filter->get();
         return $tool_key_filter;
-    }
-
-    public function delete_custom_field_tools_redis($tool_id = 0)
-    {
-        if ($tool_id == 0) {
-            $tools = $this->tool_model->select('id')->whereColumn('id', 'parent_id')->get();
-        } else {
-            $tools = $this->tool_model->select('id')->where('id', $tool_id)->get();
-        }
-
-        foreach ($tools as $tool) {
-            $allow_json = [];
-            try {
-                Redis::del('custom_field_redis_' . $tool->id);
-            } catch (\Throwable $th) {
-
-            }
-            foreach ($this->tool_wise_filter($tool->id) as $custom_field) {
-                $allow_json[$custom_field->key] = $custom_field->default_val;
-            }
-            try {
-                Redis::hMset('custom_field_redis_' . $tool->id, $allow_json);
-            } catch (\Throwable $th) {
-
-            }
-        }
     }
 }

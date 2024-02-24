@@ -56,24 +56,7 @@
     <div class="row mt-4">
         <div class="card">
             <div class="card-body pt-0">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4 class="my-3">Update Tool:</h4>
-                    </div>
-                    <div class="col-md-6">
-                        <br>
-                        @php
-                            if ($tool->is_home) {
-                                $slug = route('home');
-                            } elseif (config('constants.native_languge') == $tool->lang) {
-                                $slug = urldecode(route('native_language_tool', ['slug' => $tool->slug]));
-                            } else {
-                                $slug = urldecode(route('other_language_tool', ['lang' => $tool->lang, 'slug' => $tool->slug]));
-                            }
-                        @endphp
-                        <a href="{{ $slug }}" target="_blank">View Tool</a>
-                    </div>
-                </div>
+                <h4 class="my-3">Update Tool:</h4>
                 <form id="blog_form" action="{{ route('tool.update', ['tool' => $tool]) }}" method="POST">
                     @csrf
                     @method('PUT')
@@ -127,11 +110,7 @@
                         </div>
                     </div>
                     <h4 class="my-3 d-flex justify-content-between align-items-center">
-                        @php
-                            $decodedContent = json_decode(@$tool?->content, true);
-                            $no_of_keys = is_array($decodedContent) ? count($decodedContent) : 0;
-                        @endphp
-                        Content: ({{ @$no_of_keys ?? 0 }} Keys)
+                        Content:
                         @can('edit_tool')
                             @if (@$tool->id == @$tool->parent_id)
                                 <a href="{{ route('tool.add_tool_key', ['id' => @$tool->id]) }}"
@@ -155,7 +134,7 @@
                         </span>
                     </h4>
                     <div class="tool_content" id="tool_content">
-                        @forelse (json_decode(@$tool?->content) ?? [] as $key => $value)
+                        @forelse (json_decode($tool->content) as $key => $value)
                             <div class="row tool_content_row" data-id="{{ $key }}">
                                 {{-- <span class="cross">&times;</span> --}}
                                 <input type="hidden" value="{{ $value->type }}" name="inputType[]"
@@ -305,13 +284,9 @@
 @endsection
 @section('script')
     {{-- TINYMCE SCRIPT --}}
-    {{-- <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js" referrerpolicy="origin"></script> --}}
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/jquery.tinymce.min.js" referrerpolicy="origin"></script>
     {{-- TINYMCE SCRIPT END --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"
-        integrity="sha512-6JR4bbn8rCKvrkdoTJd/VFyXAN4CE9XMtgykPWgKiHjou56YDJxWsi90hAeMTYxNwUnKSQu9JPc3SQUg+aGCHw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="{{ asset('web_assets/admin/js/tinymce-script-2.js?v1.0.3') }}"></script>
     <script>
         $(document).ready(function() {
             $(".get_trans_btn").click(function() {
@@ -474,6 +449,7 @@
             inputType.val(element.attr('data-original-type'));
         }
     </script>
+    <script src="{{ asset('web_assets/admin/js/tinymce-script.js?v1.0.2') }}"></script>
     @if (request()->has('v'))
         <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
         <script defer src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>

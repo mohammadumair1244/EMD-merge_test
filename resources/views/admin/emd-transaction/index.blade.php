@@ -33,7 +33,7 @@
                 <div class="col-md-4">
                     <span class="color_label expire-plan">Expired</span>
                     <span class="color_label refund-plan">Refund</span>
-                    {{-- <span class="color_label test-mode">Test</span> --}}
+                    <span class="color_label test-mode">Test</span>
                 </div>
                 <div class="col-md-3">
                     <x-admin.date-filter></x-admin.date-filter>
@@ -45,12 +45,11 @@
                         <thead>
                             <tr>
                                 <th>Sr.</th>
-                                <th>Order# / Payment From</th>
+                                <th>Order#</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Price</th>
                                 <th>Purcahse - Expiry</th>
-                                <th>First or Recurring</th>
                                 <th>Duration</th>
                                 <th>Renew</th>
                             </tr>
@@ -68,8 +67,6 @@
                                         @else
                                             {{ $item->order_no }}
                                         @endcan
-                                        <br>
-                                        {{ @$item?->payment_from }}
                                     </td>
                                     <td>{{ @$item?->user?->name }}</td>
                                     <td>
@@ -85,8 +82,6 @@
                                     <td>{{ $item->order_item_price }} {{ $item->order_currency_code }}</td>
                                     <td>{{ Carbon\Carbon::parse($item->purchase_date)->format('d M Y') }} -
                                         {{ Carbon\Carbon::parse($item->expiry_date)->format('d M Y') }}</td>
-                                    <td>{{ \App\Models\EmdUserTransaction::FIRST_OR_RECURRING[$item->first_or_recurring ?? 0] }}
-                                    </td>
                                     <td>{{ $item->plan_days }} Days</td>
 
                                     <td>{{ $item->renewal_type }}</td>

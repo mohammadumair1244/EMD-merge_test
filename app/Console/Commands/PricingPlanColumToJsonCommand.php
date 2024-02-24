@@ -36,12 +36,8 @@ class PricingPlanColumToJsonCommand extends Command
             $emd_pricing_plan_allows = EmdPricingPlanAllow::get();
             foreach ($emd_pricing_plan_allows as $plan_item) {
                 $data1 = json_decode($plan_item->allow_json, true);
-                if ((int) $plan_item->allow_modes >= 0) {
-                    $data1[$this->allow_modes_column_key] = $plan_item->allow_modes;
-                }
-                if ((int) $plan_item->per_request_limit >= 0) {
-                    $data1[$this->per_req_limit_column_key] = $plan_item->per_request_limit;
-                }
+                $data1[$this->allow_modes_column_key] = $plan_item->allow_modes;
+                $data1[$this->per_req_limit_column_key] = $plan_item->per_request_limit;
                 $plan_item->allow_json = $data1;
                 $plan_item->save();
             }
@@ -50,12 +46,8 @@ class PricingPlanColumToJsonCommand extends Command
             $emd_user_transaction_allows = EmdUserTransactionAllow::get();
             foreach ($emd_user_transaction_allows as $tran_item) {
                 $data2 = json_decode($tran_item->allow_json, true);
-                if ((int) $tran_item->allow_modes >= 0) {
-                    $data2[$this->allow_modes_column_key] = $tran_item->allow_modes;
-                }
-                if ((int) $tran_item->per_request_limit >= 0) {
-                    $data2[$this->per_req_limit_column_key] = $tran_item->per_request_limit;
-                }
+                $data2[$this->allow_modes_column_key] = $tran_item->allow_modes;
+                $data2[$this->per_req_limit_column_key] = $tran_item->per_request_limit;
                 $tran_item->allow_json = $data2;
                 $tran_item->save();
             }
